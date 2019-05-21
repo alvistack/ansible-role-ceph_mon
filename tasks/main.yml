@@ -218,7 +218,7 @@
 
 - name: enable services
   service:
-    name: "ceph-mon@{{ inventory_hostname }}"
+    name: ceph-mon.target
     enabled: true
   changed_when: false
   ignore_errors: true

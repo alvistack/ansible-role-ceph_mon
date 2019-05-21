@@ -41,6 +41,7 @@
   remote_user: root
   roles:
     - role: ceph-mon
+      ceph_fsid: "{{ groups['ceph-mon'][0] | to_uuid }}"
 
   post_tasks:
     - name: start services

@@ -43,9 +43,9 @@ ceph_mon_config:
   - { section: "global", option: "fsid", value: "{{ ceph_fsid }}" }
   - { section: "global", option: "public network", value: "{{ ceph_public_network }}" }
   - { section: "global", option: "cluster network", value: "{{ ceph_cluster_network }}" }
+  - { section: "global", option: "mon initial members", value: "{{ ceph_mon_initial_members }}" }
+  - { section: "global", option: "mon host", value: "{{ ceph_mon_host }}" }
+  - { section: "global", option: "mon allow pool delete", value: "true" }
   - { section: "global", option: "auth cluster required", value: "cephx" }
   - { section: "global", option: "auth service required", value: "cephx" }
   - { section: "global", option: "auth client required", value: "cephx" }
-  - { section: "mon", option: "mon initial members", value: "{{ ceph_mon_initial_members }}" }
-  - { section: "mon", option: "mon host", value: "{{ ceph_mon_host }}" }
-  - { section: "mon", option: "mon allow pool delete", value: "true" }

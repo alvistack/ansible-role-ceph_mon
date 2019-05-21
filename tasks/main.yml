@@ -106,10 +106,10 @@
     ceph-authtool \
       --gen-key \
       --name client.admin \
-      --cap mds 'allow *' \
-      --cap mgr 'allow *' \
       --cap mon 'allow *' \
+      --cap mgr 'allow *' \
       --cap osd 'allow *' \
+      --cap mds 'allow *' \
       --create-keyring /etc/ceph/ceph.client.admin.keyring
   args:
     executable: "/bin/bash"

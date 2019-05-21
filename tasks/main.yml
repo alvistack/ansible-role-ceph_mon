@@ -1,0 +1,225 @@
+---
+
+# (c) Wong Hoi Sing Edison <hswong3i@pantarei-design.com>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+- name: include release specific variables
+  include_vars: "{{ loop_var }}"
+  with_first_found:
+    - files:
+        - "{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
+        - "{{ ansible_distribution | lower }}-{{ ansible_distribution_major_version | lower }}.yml"
+        - "{{ ansible_os_family | lower }}-{{ ansible_distribution_major_version | lower }}.yml"
+        - "{{ ansible_distribution | lower }}.yml"
+        - "{{ ansible_os_family | lower }}.yml"
+        - "main.yml"
+      paths: "../vars"
+  loop_control:
+    loop_var: "loop_var"
+  ignore_errors: true
+  tags: ceph_mon
+
+- name: include release specific tasks
+  include_tasks: "{{ loop_var }}"
+  with_first_found:
+    - files:
+        - "{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
+        - "{{ ansible_distribution | lower }}-{{ ansible_distribution_major_version | lower }}.yml"
+        - "{{ ansible_os_family | lower }}-{{ ansible_distribution_major_version | lower }}.yml"
+        - "{{ ansible_distribution | lower }}.yml"
+        - "{{ ansible_os_family | lower }}.yml"
+      paths: "."
+  loop_control:
+    loop_var: "loop_var"
+  ignore_errors: true
+  tags: ceph_mon
+
+- name: prepare directories
+  file:
+    dest: "{{ item.dest }}"
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default('root') }}"
+    mode: "{{ item.mode | default('0755') }}"
+    state: "{{ item.state | default('directory') }}"
+  with_items:
+    - { dest: "/etc/ceph" }
+    - { dest: "/var/lib/ceph/mon/ceph-{{ inventory_hostname }}", owner: "ceph", group: "ceph" }
+    - { dest: "/var/lib/ceph/tmp", owner: "ceph", group: "ceph" }
+  tags: ceph_mon
+
+- name: touch files
+  copy:
+    dest: "{{ item.dest }}"
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default('root') }}"
+    mode: "{{ item.mode | default('0644') }}"
+    content: ""
+    force: false
+  with_items:
+    - { dest: "/etc/ceph/ceph.conf", owner: "ceph", group: "ceph" }
+  tags: ceph_mon
+
+- name: tweak settings in ini files
+  ini_file:
+    path: "/etc/ceph/ceph.conf"
+    section: "{{ item.section }}"
+    option: "{{ item.option }}"
+    value: "{{ item.value }}"
+  with_items: "{{ ceph_mon_config }}"
+  notify:
+    - ceph_mon | systemctl restart
+  tags: ceph_mon
+
+- name: create monitor initial keyring
+  shell: |
+    set -o pipefail
+    ceph-authtool \
+      --gen-key \
+      --name mon. \
+      --cap mon 'allow *' \
+      --create-keyring /var/lib/ceph/tmp/ceph.mon.keyring
+  args:
+    executable: "/bin/bash"
+    creates: "/var/lib/ceph/tmp/ceph.mon.keyring"
+  when: inventory_hostname == ansible_play_hosts[0]
+  delegate_to: "{{ ansible_play_hosts[0] }}"
+  register: result
+  changed_when: result is not succeeded
+  notify:
+    - ceph_mon | systemctl restart
+  tags: ceph_mon
+
+- name: create custom admin keyring
+  shell: |
+    set -o pipefail
+    ceph-authtool \
+      --gen-key \
+      --name client.admin \
+      --cap mds 'allow *' \
+      --cap mgr 'allow *' \
+      --cap mon 'allow *' \
+      --cap osd 'allow *' \
+      --create-keyring /etc/ceph/ceph.client.admin.keyring
+  args:
+    executable: "/bin/bash"
+    creates: "/etc/ceph/ceph.client.admin.keyring"
+  when: inventory_hostname == ansible_play_hosts[0]
+  delegate_to: "{{ ansible_play_hosts[0] }}"
+  register: result
+  changed_when: result is not succeeded
+  notify:
+    - ceph_mon | systemctl restart
+  tags: ceph_mon
+
+- name: import admin keyring into monitor keyring
+  shell: |
+    set -o pipefail
+    ceph-authtool /var/lib/ceph/tmp/ceph.mon.keyring \
+      --import-keyring /etc/ceph/ceph.client.admin.keyring
+  args:
+    executable: "/bin/bash"
+  when: inventory_hostname == ansible_play_hosts[0]
+  delegate_to: "{{ ansible_play_hosts[0] }}"
+  changed_when: false
+  ignore_errors: true
+  tags: ceph_mon
+
+- name: prepare files
+  file:
+    dest: "{{ item.dest }}"
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default('root') }}"
+    mode: "{{ item.mode | default('0644') }}"
+    state: "{{ item.state | default('file') }}"
+  with_items:
+    - { dest: "/etc/ceph/ceph.client.admin.keyring", owner: "ceph", group: "ceph", mode: "0600" }
+    - { dest: "/etc/ceph/ceph.conf", owner: "ceph", group: "ceph" }
+    - { dest: "/var/lib/ceph/tmp/ceph.mon.keyring", owner: "ceph", group: "ceph", mode: "0600" }
+  when: inventory_hostname == ansible_play_hosts[0]
+  notify:
+    - ceph_mon | systemctl restart
+  tags: ceph_mon
+
+- name: base64 encode keyring
+  shell: |
+    set -o pipefail
+    tar zcfP - {{ item.value | join(' ') }} | base64 -w 0
+  with_dict:
+    base64:
+      - "/etc/ceph/ceph.client.admin.keyring"
+      - "/var/lib/ceph/tmp/ceph.mon.keyring"
+  args:
+    executable: "/bin/bash"
+  delegate_to: "{{ ansible_play_hosts[0] }}"
+  register: base64_encode_result
+  changed_when: base64_encode_result is not succeeded
+  tags: ceph_mon
+
+- name: base64 decode certificates
+  shell: |
+    set -o pipefail
+    echo -n {{ base64_encode_result.results[0].stdout | quote }} | base64 -d | tar zx -C /
+  args:
+    executable: "/bin/bash"
+  when: inventory_hostname != ansible_play_hosts[0]
+  register: base64_decode_result
+  changed_when: base64_decode_result is not succeeded
+  tags: ceph_mon
+
+- name: prepare files
+  file:
+    dest: "{{ item.dest }}"
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default('root') }}"
+    mode: "{{ item.mode | default('0644') }}"
+    state: "{{ item.state | default('file') }}"
+  with_items:
+    - { dest: "/etc/ceph/ceph.client.admin.keyring", owner: "ceph", group: "ceph", mode: "0600" }
+    - { dest: "/etc/ceph/ceph.conf", owner: "ceph", group: "ceph" }
+    - { dest: "/var/lib/ceph/tmp/ceph.mon.keyring", owner: "ceph", group: "ceph", mode: "0600" }
+  when: inventory_hostname != ansible_play_hosts[0]
+  notify:
+    - ceph_mon | systemctl restart
+  tags: ceph_mon
+
+- name: ceph monitor mkfs with keyring
+  shell: |
+    set -o pipefail
+    ceph-mon \
+      --fsid {{ ceph_fsid }} \
+      --cluster ceph \
+      --setuser ceph \
+      --setgroup ceph \
+      --mkfs -i {{ inventory_hostname }} \
+      --keyring /var/lib/ceph/tmp/ceph.mon.keyring
+  args:
+    executable: "/bin/bash"
+    creates: "/var/lib/ceph/mon/ceph-{{ inventory_hostname }}/keyring"
+  register: result
+  changed_when: result is not succeeded
+  notify:
+    - ceph_mon | systemctl restart
+  tags: ceph_mon
+
+- name: flush handlers
+  meta: flush_handlers
+  tags: ceph_mon
+
+- name: enable services
+  service:
+    name: "ceph-mon@{{ inventory_hostname }}"
+    enabled: true
+  changed_when: false
+  ignore_errors: true
+  tags: ceph_mon

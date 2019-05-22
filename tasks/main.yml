@@ -54,6 +54,11 @@
     state: "{{ item.state | default('directory') }}"
   with_items:
     - { dest: "/etc/ceph" }
+    - { dest: "/var/lib/ceph/bootstrap-mds", owner: "ceph", group: "ceph" }
+    - { dest: "/var/lib/ceph/bootstrap-mgr", owner: "ceph", group: "ceph" }
+    - { dest: "/var/lib/ceph/bootstrap-osd", owner: "ceph", group: "ceph" }
+    - { dest: "/var/lib/ceph/bootstrap-rbd", owner: "ceph", group: "ceph" }
+    - { dest: "/var/lib/ceph/bootstrap-rgw", owner: "ceph", group: "ceph" }
     - { dest: "/var/lib/ceph/mon/ceph-{{ inventory_hostname }}", owner: "ceph", group: "ceph" }
     - { dest: "/var/lib/ceph/tmp", owner: "ceph", group: "ceph" }
   tags: ceph_mon
@@ -100,7 +105,7 @@
     - ceph_mon | systemctl restart
   tags: ceph_mon
 
-- name: create custom admin keyring
+- name: create and import custom admin keyring
   shell: |
     set -o pipefail
     ceph-authtool \
@@ -111,6 +116,8 @@
       --cap osd 'allow *' \
       --cap mds 'allow *' \
       --create-keyring /etc/ceph/ceph.client.admin.keyring
+    ceph-authtool /var/lib/ceph/tmp/ceph.mon.keyring \
+      --import-keyring /etc/ceph/ceph.client.admin.keyring
   args:
     executable: "/bin/bash"
     creates: "/etc/ceph/ceph.client.admin.keyring"
@@ -122,17 +129,31 @@
     - ceph_mon | systemctl restart
   tags: ceph_mon
 
-- name: import admin keyring into monitor keyring
+- name: create and import bootstrap-* keyring
   shell: |
     set -o pipefail
+    ceph-authtool \
+      --gen-key \
+      --name client.{{ item }} \
+      --cap mon 'allow profile {{ item }}' \
+      --create-keyring /var/lib/ceph/{{ item }}/ceph.keyring
     ceph-authtool /var/lib/ceph/tmp/ceph.mon.keyring \
-      --import-keyring /etc/ceph/ceph.client.admin.keyring
+      --import-keyring /var/lib/ceph/{{ item }}/ceph.keyring
   args:
     executable: "/bin/bash"
+    creates: "/var/lib/ceph/{{ item }}/ceph.keyring"
+  with_items:
+    - "bootstrap-mds"
+    - "bootstrap-mgr"
+    - "bootstrap-osd"
+    - "bootstrap-rbd"
+    - "bootstrap-rgw"
   when: inventory_hostname == ansible_play_hosts[0]
   delegate_to: "{{ ansible_play_hosts[0] }}"
-  changed_when: false
-  ignore_errors: true
+  register: result
+  changed_when: result is not succeeded
+  notify:
+    - ceph_mon | systemctl restart
   tags: ceph_mon
 
 - name: prepare files
@@ -145,6 +166,11 @@
   with_items:
     - { dest: "/etc/ceph/ceph.client.admin.keyring", owner: "ceph", group: "ceph", mode: "0600" }
     - { dest: "/etc/ceph/ceph.conf", owner: "ceph", group: "ceph" }
+    - { dest: "/var/lib/ceph/bootstrap-mds/ceph.keyring", owner: "ceph", group: "ceph", mode: "0600" }
+    - { dest: "/var/lib/ceph/bootstrap-mgr/ceph.keyring", owner: "ceph", group: "ceph", mode: "0600" }
+    - { dest: "/var/lib/ceph/bootstrap-osd/ceph.keyring", owner: "ceph", group: "ceph", mode: "0600" }
+    - { dest: "/var/lib/ceph/bootstrap-rbd/ceph.keyring", owner: "ceph", group: "ceph", mode: "0600" }
+    - { dest: "/var/lib/ceph/bootstrap-rgw/ceph.keyring", owner: "ceph", group: "ceph", mode: "0600" }
     - { dest: "/var/lib/ceph/tmp/ceph.mon.keyring", owner: "ceph", group: "ceph", mode: "0600" }
   when: inventory_hostname == ansible_play_hosts[0]
   notify:
@@ -158,6 +184,11 @@
   with_dict:
     base64:
       - "/etc/ceph/ceph.client.admin.keyring"
+      - "/var/lib/ceph/bootstrap-mds/ceph.keyring"
+      - "/var/lib/ceph/bootstrap-mgr/ceph.keyring"
+      - "/var/lib/ceph/bootstrap-osd/ceph.keyring"
+      - "/var/lib/ceph/bootstrap-rbd/ceph.keyring"
+      - "/var/lib/ceph/bootstrap-rgw/ceph.keyring"
       - "/var/lib/ceph/tmp/ceph.mon.keyring"
   args:
     executable: "/bin/bash"
@@ -187,6 +218,11 @@
   with_items:
     - { dest: "/etc/ceph/ceph.client.admin.keyring", owner: "ceph", group: "ceph", mode: "0600" }
     - { dest: "/etc/ceph/ceph.conf", owner: "ceph", group: "ceph" }
+    - { dest: "/var/lib/ceph/bootstrap-mds/ceph.keyring", owner: "ceph", group: "ceph", mode: "0600" }
+    - { dest: "/var/lib/ceph/bootstrap-mgr/ceph.keyring", owner: "ceph", group: "ceph", mode: "0600" }
+    - { dest: "/var/lib/ceph/bootstrap-osd/ceph.keyring", owner: "ceph", group: "ceph", mode: "0600" }
+    - { dest: "/var/lib/ceph/bootstrap-rbd/ceph.keyring", owner: "ceph", group: "ceph", mode: "0600" }
+    - { dest: "/var/lib/ceph/bootstrap-rgw/ceph.keyring", owner: "ceph", group: "ceph", mode: "0600" }
     - { dest: "/var/lib/ceph/tmp/ceph.mon.keyring", owner: "ceph", group: "ceph", mode: "0600" }
   when: inventory_hostname != ansible_play_hosts[0]
   notify:

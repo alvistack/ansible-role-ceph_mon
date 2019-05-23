@@ -23,12 +23,10 @@
   ignore_errors: true
 
 - name: ceph_mon | systemctl restart
-  systemd:
+  service:
     name: "{{ item.name }}"
     state: restarted
   with_items:
     - { name: "ceph-mon@{{ ansible_hostname }}" }
-  when:
-    - ansible_service_mgr == 'systemd'
   changed_when: false
   ignore_errors: true

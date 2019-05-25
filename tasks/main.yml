@@ -56,7 +56,7 @@
     - { dest: "/etc/ceph" }
     - { dest: "/lib/systemd/system" }
     - { dest: "/var/lib/ceph/bootstrap-osd", owner: "ceph", group: "ceph" }
-    - { dest: "/var/lib/ceph/mon/ceph-{{ inventory_hostname }}", owner: "ceph", group: "ceph" }
+    - { dest: "/var/lib/ceph/mon/ceph-{{ ansible_hostname }}", owner: "ceph", group: "ceph" }
     - { dest: "/var/lib/ceph/tmp", owner: "ceph", group: "ceph" }
   tags: ceph_mon
 
@@ -108,7 +108,7 @@
   args:
     executable: "/bin/bash"
     creates: "/var/lib/ceph/tmp/ceph.mon.keyring"
-  when: inventory_hostname == ansible_play_hosts[0]
+  when: ansible_hostname == ansible_play_hosts[0]
   delegate_to: "{{ ansible_play_hosts[0] }}"
   register: result
   changed_when: result is not succeeded
@@ -132,7 +132,7 @@
   args:
     executable: "/bin/bash"
     creates: "/etc/ceph/ceph.client.admin.keyring"
-  when: inventory_hostname == ansible_play_hosts[0]
+  when: ansible_hostname == ansible_play_hosts[0]
   delegate_to: "{{ ansible_play_hosts[0] }}"
   register: result
   changed_when: result is not succeeded
@@ -153,7 +153,7 @@
   args:
     executable: "/bin/bash"
     creates: "/var/lib/ceph/bootstrap-osd/ceph.keyring"
-  when: inventory_hostname == ansible_play_hosts[0]
+  when: ansible_hostname == ansible_play_hosts[0]
   delegate_to: "{{ ansible_play_hosts[0] }}"
   register: result
   changed_when: result is not succeeded
@@ -173,7 +173,7 @@
     - { dest: "/etc/ceph/ceph.conf", owner: "ceph", group: "ceph" }
     - { dest: "/var/lib/ceph/bootstrap-osd/ceph.keyring", owner: "ceph", group: "ceph", mode: "0600" }
     - { dest: "/var/lib/ceph/tmp/ceph.mon.keyring", owner: "ceph", group: "ceph", mode: "0600" }
-  when: inventory_hostname == ansible_play_hosts[0]
+  when: ansible_hostname == ansible_play_hosts[0]
   notify:
     - ceph_mon | systemctl restart
   tags: ceph_mon
@@ -200,7 +200,7 @@
     echo -n {{ base64_encode_result.results[0].stdout | quote }} | base64 -d | tar zx -C /
   args:
     executable: "/bin/bash"
-  when: inventory_hostname != ansible_play_hosts[0]
+  when: ansible_hostname != ansible_play_hosts[0]
   register: base64_decode_result
   changed_when: base64_decode_result is not succeeded
   tags: ceph_mon
@@ -218,7 +218,7 @@
     - { dest: "/lib/systemd/system/ceph-mon@.service" }
     - { dest: "/var/lib/ceph/bootstrap-osd/ceph.keyring", owner: "ceph", group: "ceph", mode: "0600" }
     - { dest: "/var/lib/ceph/tmp/ceph.mon.keyring", owner: "ceph", group: "ceph", mode: "0600" }
-  when: inventory_hostname != ansible_play_hosts[0]
+  when: ansible_hostname != ansible_play_hosts[0]
   notify:
     - ceph_mon | systemctl restart
   tags: ceph_mon
@@ -228,7 +228,7 @@
     set -o pipefail
     ceph-mon \
       --mkfs \
-      --id {{ inventory_hostname }} \
+      --id {{ ansible_hostname }} \
       --fsid {{ ceph_fsid }} \
       --cluster ceph \
       --setuser ceph \
@@ -236,7 +236,7 @@
       --keyring /var/lib/ceph/tmp/ceph.mon.keyring
   args:
     executable: "/bin/bash"
-    creates: "/var/lib/ceph/mon/ceph-{{ inventory_hostname }}/keyring"
+    creates: "/var/lib/ceph/mon/ceph-{{ ansible_hostname }}/keyring"
   register: result
   changed_when: result is not succeeded
   notify:

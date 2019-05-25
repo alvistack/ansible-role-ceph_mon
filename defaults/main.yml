@@ -33,7 +33,7 @@ ceph_mon_host: >-
   {%- endfor -%}
 
 # Ceph public network.
-ceph_public_network: "0.0.0.0/0"
+ceph_public_network: "{{ (ansible_default_ipv4.network + '/' + ansible_default_ipv4.netmask) | ipaddr('net') }}"
 
 # Ceph cluster network.
 ceph_cluster_network: "{{ (ansible_default_ipv4.network + '/' + ansible_default_ipv4.netmask) | ipaddr('net') }}"

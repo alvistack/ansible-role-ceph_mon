@@ -249,8 +249,11 @@
 
 - name: enable services
   service:
-    name: "ceph-mon@{{ ansible_hostname }}"
+    name: "{{ item.name }}"
     enabled: true
+  with_items:
+    - { name: "ceph-mon.target" }
+    - { name: "ceph-mon@{{ ansible_hostname }}" }
   changed_when: false
   ignore_errors: true
   tags: ceph_mon

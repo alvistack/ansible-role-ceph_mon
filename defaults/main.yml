@@ -19,4 +19,4 @@ ceph_version: "nautilus"
 
 # Ceph mon configs.
 ceph_mon_config:
-  - { state: "present", section: "global", option: "mon allow pool delete", value: "true" }
+  - { state: "present", section: "mon", option: "mon allow pool delete", value: "true" }

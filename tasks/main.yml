@@ -54,8 +54,27 @@
     state: "{{ item.state | default('directory') }}"
   with_items:
     - { dest: "/etc/ceph" }
-    - { dest: "/var/lib/ceph/mon/ceph-{{ inventory_hostname }}", owner: "ceph", group: "ceph" }
+    - { dest: "/lib/systemd/system" }
+    - { dest: "/var/lib/ceph/bootstrap-mds", owner: "ceph", group: "ceph" }
+    - { dest: "/var/lib/ceph/bootstrap-mgr", owner: "ceph", group: "ceph" }
+    - { dest: "/var/lib/ceph/bootstrap-osd", owner: "ceph", group: "ceph" }
+    - { dest: "/var/lib/ceph/bootstrap-rgw", owner: "ceph", group: "ceph" }
+    - { dest: "/var/lib/ceph/mon/ceph-{{ ansible_hostname }}", owner: "ceph", group: "ceph" }
     - { dest: "/var/lib/ceph/tmp", owner: "ceph", group: "ceph" }
+  tags: ceph_mon
+
+- name: copy templates
+  template:
+    src: "./templates{{ item.dest }}.j2"
+    dest: "{{ item.dest }}"
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default('root') }}"
+    mode: "{{ item.mode | default('0644') }}"
+  with_items:
+    - { dest: "/lib/systemd/system/ceph-mon@.service" }
+  notify:
+    - ceph_mon | systemctl daemon-reload
+    - ceph_mon | systemctl restart
   tags: ceph_mon
 
 - name: touch files
@@ -74,8 +93,9 @@
   ini_file:
     path: "/etc/ceph/ceph.conf"
     section: "{{ item.section }}"
-    option: "{{ item.option }}"
-    value: "{{ item.value }}"
+    option: "{{ item.option | default(None) or omit }}"
+    value: "{{ item.value | default(None) or omit }}"
+    state: "{{ item.state | default('present') }}"
   with_items: "{{ ceph_mon_config }}"
   notify:
     - ceph_mon | systemctl restart
@@ -92,7 +112,7 @@
   args:
     executable: "/bin/bash"
     creates: "/var/lib/ceph/tmp/ceph.mon.keyring"
-  when: inventory_hostname == ansible_play_hosts[0]
+  when: ansible_hostname == ansible_play_hosts[0]
   delegate_to: "{{ ansible_play_hosts[0] }}"
   register: result
   changed_when: result is not succeeded
@@ -100,39 +120,28 @@
     - ceph_mon | systemctl restart
   tags: ceph_mon
 
-- name: create custom admin keyring
+- name: create and import admin keyring
   shell: |
     set -o pipefail
     ceph-authtool \
       --gen-key \
       --name client.admin \
-      --cap mds 'allow *' \
-      --cap mgr 'allow *' \
       --cap mon 'allow *' \
+      --cap mgr 'allow *' \
       --cap osd 'allow *' \
+      --cap mds 'allow *' \
       --create-keyring /etc/ceph/ceph.client.admin.keyring
+    ceph-authtool /var/lib/ceph/tmp/ceph.mon.keyring \
+      --import-keyring /etc/ceph/ceph.client.admin.keyring
   args:
     executable: "/bin/bash"
     creates: "/etc/ceph/ceph.client.admin.keyring"
-  when: inventory_hostname == ansible_play_hosts[0]
+  when: ansible_hostname == ansible_play_hosts[0]
   delegate_to: "{{ ansible_play_hosts[0] }}"
   register: result
   changed_when: result is not succeeded
   notify:
     - ceph_mon | systemctl restart
-  tags: ceph_mon
-
-- name: import admin keyring into monitor keyring
-  shell: |
-    set -o pipefail
-    ceph-authtool /var/lib/ceph/tmp/ceph.mon.keyring \
-      --import-keyring /etc/ceph/ceph.client.admin.keyring
-  args:
-    executable: "/bin/bash"
-  when: inventory_hostname == ansible_play_hosts[0]
-  delegate_to: "{{ ansible_play_hosts[0] }}"
-  changed_when: false
-  ignore_errors: true
   tags: ceph_mon
 
 - name: prepare files
@@ -144,9 +153,8 @@
     state: "{{ item.state | default('file') }}"
   with_items:
     - { dest: "/etc/ceph/ceph.client.admin.keyring", owner: "ceph", group: "ceph", mode: "0600" }
-    - { dest: "/etc/ceph/ceph.conf", owner: "ceph", group: "ceph" }
     - { dest: "/var/lib/ceph/tmp/ceph.mon.keyring", owner: "ceph", group: "ceph", mode: "0600" }
-  when: inventory_hostname == ansible_play_hosts[0]
+  when: ansible_hostname == ansible_play_hosts[0]
   notify:
     - ceph_mon | systemctl restart
   tags: ceph_mon
@@ -172,7 +180,7 @@
     echo -n {{ base64_encode_result.results[0].stdout | quote }} | base64 -d | tar zx -C /
   args:
     executable: "/bin/bash"
-  when: inventory_hostname != ansible_play_hosts[0]
+  when: ansible_hostname != ansible_play_hosts[0]
   register: base64_decode_result
   changed_when: base64_decode_result is not succeeded
   tags: ceph_mon
@@ -186,9 +194,8 @@
     state: "{{ item.state | default('file') }}"
   with_items:
     - { dest: "/etc/ceph/ceph.client.admin.keyring", owner: "ceph", group: "ceph", mode: "0600" }
-    - { dest: "/etc/ceph/ceph.conf", owner: "ceph", group: "ceph" }
     - { dest: "/var/lib/ceph/tmp/ceph.mon.keyring", owner: "ceph", group: "ceph", mode: "0600" }
-  when: inventory_hostname != ansible_play_hosts[0]
+  when: ansible_hostname != ansible_play_hosts[0]
   notify:
     - ceph_mon | systemctl restart
   tags: ceph_mon
@@ -197,15 +204,16 @@
   shell: |
     set -o pipefail
     ceph-mon \
+      --mkfs \
+      --id {{ ansible_hostname }} \
       --fsid {{ ceph_fsid }} \
       --cluster ceph \
       --setuser ceph \
       --setgroup ceph \
-      --mkfs -i {{ inventory_hostname }} \
       --keyring /var/lib/ceph/tmp/ceph.mon.keyring
   args:
     executable: "/bin/bash"
-    creates: "/var/lib/ceph/mon/ceph-{{ inventory_hostname }}/keyring"
+    creates: "/var/lib/ceph/mon/ceph-{{ ansible_hostname }}/keyring"
   register: result
   changed_when: result is not succeeded
   notify:
@@ -216,10 +224,87 @@
   meta: flush_handlers
   tags: ceph_mon
 
+- name: ceph auth get bootstrap-mgr
+  shell: |
+    set -o pipefail
+    ceph \
+      auth get client.bootstrap-mgr \
+      --out-file /var/lib/ceph/bootstrap-mgr/ceph.keyring
+  args:
+    executable: "/bin/bash"
+    creates: "/var/lib/ceph/bootstrap-mgr/ceph.keyring"
+  register: result
+  until: result is succeeded
+  changed_when: result is not succeeded
+  tags: ceph_mon
+
+- name: ceph auth get bootstrap-osd
+  shell: |
+    set -o pipefail
+    ceph \
+      auth get client.bootstrap-osd \
+      --out-file /var/lib/ceph/bootstrap-osd/ceph.keyring
+  args:
+    executable: "/bin/bash"
+    creates: "/var/lib/ceph/bootstrap-osd/ceph.keyring"
+  register: result
+  until: result is succeeded
+  changed_when: result is not succeeded
+  tags: ceph_mon
+
+- name: ceph auth get bootstrap-mds
+  shell: |
+    set -o pipefail
+    ceph \
+      auth get client.bootstrap-mds \
+      --out-file /var/lib/ceph/bootstrap-mds/ceph.keyring
+  args:
+    executable: "/bin/bash"
+    creates: "/var/lib/ceph/bootstrap-mds/ceph.keyring"
+  register: result
+  until: result is succeeded
+  changed_when: result is not succeeded
+  tags: ceph_mon
+
+- name: ceph auth get bootstrap-rgw
+  shell: |
+    set -o pipefail
+    ceph \
+      auth get client.bootstrap-rgw \
+      --out-file /var/lib/ceph/bootstrap-rgw/ceph.keyring
+  args:
+    executable: "/bin/bash"
+    creates: "/var/lib/ceph/bootstrap-rgw/ceph.keyring"
+  register: result
+  until: result is succeeded
+  changed_when: result is not succeeded
+  tags: ceph_mon
+
+- name: prepare files
+  file:
+    dest: "{{ item.dest }}"
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default('root') }}"
+    mode: "{{ item.mode | default('0644') }}"
+    state: "{{ item.state | default('file') }}"
+  with_items:
+    - { dest: "/etc/ceph/ceph.client.admin.keyring", owner: "ceph", group: "ceph", mode: "0600" }
+    - { dest: "/etc/ceph/ceph.conf", owner: "ceph", group: "ceph" }
+    - { dest: "/lib/systemd/system/ceph-mon@.service" }
+    - { dest: "/var/lib/ceph/bootstrap-mds/ceph.keyring", owner: "ceph", group: "ceph", mode: "0600" }
+    - { dest: "/var/lib/ceph/bootstrap-mgr/ceph.keyring", owner: "ceph", group: "ceph", mode: "0600" }
+    - { dest: "/var/lib/ceph/bootstrap-osd/ceph.keyring", owner: "ceph", group: "ceph", mode: "0600" }
+    - { dest: "/var/lib/ceph/bootstrap-rgw/ceph.keyring", owner: "ceph", group: "ceph", mode: "0600" }
+    - { dest: "/var/lib/ceph/tmp/ceph.mon.keyring", owner: "ceph", group: "ceph", mode: "0600" }
+  tags: ceph_mon
+
 - name: enable services
   service:
-    name: "ceph-mon@{{ inventory_hostname }}"
+    name: "{{ item.name }}"
     enabled: true
+  with_items:
+    - { name: "ceph-mon.target" }
+    - { name: "ceph-mon@{{ ansible_hostname }}" }
   changed_when: false
   ignore_errors: true
   tags: ceph_mon

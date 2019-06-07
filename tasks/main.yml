@@ -209,7 +209,6 @@
     ceph-mon \
       --mkfs \
       --id {{ ansible_hostname }} \
-      --fsid {{ ceph_fsid }} \
       --cluster ceph \
       --setuser ceph \
       --setgroup ceph \

@@ -55,7 +55,7 @@
     group: "{{ item.group | default('root') }}"
     mode: "{{ item.mode | default('0755') }}"
     state: "{{ item.state | default('directory') }}"
-  with_items:
+  loop:
     - { dest: "/etc/ceph" }
     - { dest: "/lib/systemd/system" }
     - { dest: "/var/lib/ceph/bootstrap-mds", owner: "ceph", group: "ceph" }
@@ -73,7 +73,7 @@
     owner: "{{ item.owner | default('root') }}"
     group: "{{ item.group | default('root') }}"
     mode: "{{ item.mode | default('0644') }}"
-  with_items:
+  loop:
     - { dest: "/lib/systemd/system/ceph-mon@.service" }
   notify:
     - ceph_mon | systemctl daemon-reload
@@ -88,7 +88,7 @@
     mode: "{{ item.mode | default('0644') }}"
     content: ""
     force: false
-  with_items:
+  loop:
     - { dest: "/etc/ceph/ceph.conf", owner: "ceph", group: "ceph" }
   tags: ceph_mon
 
@@ -99,7 +99,7 @@
     option: "{{ item.option | default(None) or omit }}"
     value: "{{ item.value | default(None) or omit }}"
     state: "{{ item.state | default('present') }}"
-  with_items: "{{ ceph_mon_config }}"
+  loop: "{{ ceph_mon_config }}"
   notify:
     - ceph_mon | systemctl restart
   tags: ceph_mon
@@ -154,7 +154,7 @@
     group: "{{ item.group | default('root') }}"
     mode: "{{ item.mode | default('0644') }}"
     state: "{{ item.state | default('file') }}"
-  with_items:
+  loop:
     - { dest: "/etc/ceph/ceph.client.admin.keyring", owner: "ceph", group: "ceph", mode: "0600" }
     - { dest: "/var/lib/ceph/tmp/ceph.mon.keyring", owner: "ceph", group: "ceph", mode: "0600" }
   when: ansible_hostname == ansible_play_hosts[0]
@@ -195,7 +195,7 @@
     group: "{{ item.group | default('root') }}"
     mode: "{{ item.mode | default('0644') }}"
     state: "{{ item.state | default('file') }}"
-  with_items:
+  loop:
     - { dest: "/etc/ceph/ceph.client.admin.keyring", owner: "ceph", group: "ceph", mode: "0600" }
     - { dest: "/var/lib/ceph/tmp/ceph.mon.keyring", owner: "ceph", group: "ceph", mode: "0600" }
   when: ansible_hostname != ansible_play_hosts[0]
@@ -289,7 +289,7 @@
     group: "{{ item.group | default('root') }}"
     mode: "{{ item.mode | default('0644') }}"
     state: "{{ item.state | default('file') }}"
-  with_items:
+  loop:
     - { dest: "/etc/ceph/ceph.client.admin.keyring", owner: "ceph", group: "ceph", mode: "0600" }
     - { dest: "/etc/ceph/ceph.conf", owner: "ceph", group: "ceph" }
     - { dest: "/lib/systemd/system/ceph-mon@.service" }
@@ -304,7 +304,7 @@
   service:
     name: "{{ item.name }}"
     enabled: true
-  with_items:
+  loop:
     - { name: "ceph-mon.target" }
     - { name: "ceph-mon@{{ ansible_hostname }}" }
   changed_when: false

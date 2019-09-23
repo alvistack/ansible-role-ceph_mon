@@ -222,6 +222,17 @@
     - ceph_mon | systemctl restart
   tags: ceph_mon
 
+- name: enable services
+  service:
+    name: "{{ item.name }}"
+    enabled: true
+  loop:
+    - { name: "ceph-mon.target" }
+    - { name: "ceph-mon@{{ ansible_hostname }}" }
+  changed_when: false
+  ignore_errors: true
+  tags: ceph_mon
+
 - name: flush handlers
   meta: flush_handlers
   tags: ceph_mon
@@ -298,15 +309,4 @@
     - { dest: "/var/lib/ceph/bootstrap-osd/ceph.keyring", owner: "ceph", group: "ceph", mode: "0600" }
     - { dest: "/var/lib/ceph/bootstrap-rgw/ceph.keyring", owner: "ceph", group: "ceph", mode: "0600" }
     - { dest: "/var/lib/ceph/tmp/ceph.mon.keyring", owner: "ceph", group: "ceph", mode: "0600" }
-  tags: ceph_mon
-
-- name: enable services
-  service:
-    name: "{{ item.name }}"
-    enabled: true
-  loop:
-    - { name: "ceph-mon.target" }
-    - { name: "ceph-mon@{{ ansible_hostname }}" }
-  changed_when: false
-  ignore_errors: true
   tags: ceph_mon

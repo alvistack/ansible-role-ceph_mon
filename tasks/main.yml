@@ -162,7 +162,7 @@
     - ceph_mon | systemctl restart
   tags: ceph_mon
 
-- name: base64 encode keyring
+- name: base64 encode
   shell: |
     set -o pipefail
     tar zcfP - {{ _params | join(' ') }} | base64 -w 0
@@ -177,7 +177,7 @@
   changed_when: base64_encode_result is not succeeded
   tags: ceph_mon
 
-- name: base64 decode certificates
+- name: base64 decode
   shell: |
     set -o pipefail
     echo -n {{ base64_encode_result.stdout | quote }} | base64 -d | tar zx -C /

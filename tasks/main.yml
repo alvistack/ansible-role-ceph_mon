@@ -222,19 +222,20 @@
     - ceph_mon | systemctl restart
   tags: ceph_mon
 
+- name: flush handlers
+  meta: flush_handlers
+  tags: ceph_mon
+
 - name: enable services
   service:
     name: "{{ item.name }}"
+    state: "started"
     enabled: true
   loop:
     - { name: "ceph-mon.target" }
     - { name: "ceph-mon@{{ ansible_hostname }}" }
   changed_when: false
   ignore_errors: true
-  tags: ceph_mon
-
-- name: flush handlers
-  meta: flush_handlers
   tags: ceph_mon
 
 - name: ceph auth get bootstrap-mgr

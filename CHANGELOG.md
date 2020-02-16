@@ -1,4 +1,4 @@
-# Ansible Role for ceph-mon
+# Ansible Role for Ceph Monitor
 
 ## 4.3.0 - TBC
 

@@ -1,4 +1,4 @@
-# Ansible Role for Ceph Monitor
+# Ansible Role for Ceph Monitor Daemon
 
 ## 4.3.0 - TBC
 

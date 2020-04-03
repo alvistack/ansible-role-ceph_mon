@@ -1,6 +1,6 @@
 # Ansible Role for Ceph Monitor Daemon
 
-[![Travis](https://img.shields.io/travis/alvistack/ansible-role-ceph_mon.svg)](https://travis-ci.org/alvistack/ansible-role-ceph_mon)
+[![Travis](https://img.shields.io/travis/com/alvistack/ansible-role-ceph_mon.svg)](https://travis-ci.com/alvistack/ansible-role-ceph_mon)
 [![GitHub release](https://img.shields.io/github/release/alvistack/ansible-role-ceph_mon.svg)](https://github.com/alvistack/ansible-role-ceph_mon)
 [![GitHub license](https://img.shields.io/github/license/alvistack/ansible-role-ceph_mon.svg)](https://github.com/alvistack/ansible-role-ceph_mon/blob/master/LICENSE)
 [![Ansible Role](https://img.shields.io/badge/galaxy-alvistack.ceph_mon-blue.svg)](https://galaxy.ansible.com/alvistack/ceph_mon)

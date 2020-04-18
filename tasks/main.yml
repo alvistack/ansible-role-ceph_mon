@@ -246,12 +246,9 @@
 
 - name: start services
   service:
-    name: "{{ item.name }}"
+    name: "ceph-mon.target"
     state: "started"
     enabled: true
-  loop:
-    - { name: "ceph-mon.target" }
-    - { name: "ceph-mon@{{ ansible_hostname }}" }
   changed_when: false
   ignore_errors: true
   tags: ceph_mon

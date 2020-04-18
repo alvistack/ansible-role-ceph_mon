@@ -244,7 +244,16 @@
   meta: flush_handlers
   tags: ceph_mon
 
-- name: start services
+- name: "systemctl start ceph-mon@{{ ansible_hostname }}"
+  service:
+    name: "ceph-mon@{{ ansible_hostname }}"
+    state: "started"
+    enabled: true
+  changed_when: false
+  ignore_errors: true
+  tags: ceph_mon
+
+- name: systemctl start ceph-mon.target
   service:
     name: "ceph-mon.target"
     state: "started"

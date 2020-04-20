@@ -240,10 +240,6 @@
     - ceph_mon | systemctl restart ceph-mon.target
   tags: ceph_mon
 
-- name: flush handlers
-  meta: flush_handlers
-  tags: ceph_mon
-
 - name: "systemctl start ceph-mon@{{ ansible_hostname }}"
   service:
     name: "ceph-mon@{{ ansible_hostname }}"
@@ -260,6 +256,10 @@
     enabled: true
   changed_when: false
   ignore_errors: true
+  tags: ceph_mon
+
+- name: flush handlers
+  meta: flush_handlers
   tags: ceph_mon
 
 - name: ceph auth get client.bootstrap-*

@@ -20,7 +20,7 @@
   changed_when: false
   ignore_errors: true
 
-- name: ceph_mon | systemctl restart
+- name: ceph_mon | systemctl restart ceph-mon.target
   service:
     name: "ceph-mon.target"
     state: "restarted"

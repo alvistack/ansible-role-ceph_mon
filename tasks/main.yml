@@ -62,7 +62,7 @@
     - { dest: "/var/lib/ceph/bootstrap-mgr", owner: "ceph", group: "ceph" }
     - { dest: "/var/lib/ceph/bootstrap-osd", owner: "ceph", group: "ceph" }
     - { dest: "/var/lib/ceph/bootstrap-rgw", owner: "ceph", group: "ceph" }
-    - { dest: "/var/lib/ceph/mon/ceph-{{ ansible_hostname }}", owner: "ceph", group: "ceph" }
+    - { dest: "/var/lib/ceph/mon/ceph-{{ inventory_hostname }}", owner: "ceph", group: "ceph" }
     - { dest: "/var/lib/ceph/tmp", owner: "ceph", group: "ceph" }
   tags: ceph_mon
 
@@ -116,7 +116,7 @@
   args:
     executable: "/bin/bash"
     creates: "/var/lib/ceph/tmp/ceph.mon.keyring"
-  when: ansible_hostname == ansible_play_hosts[0]
+  when: inventory_hostname == ansible_play_hosts[0]
   delegate_to: "{{ ansible_play_hosts[0] }}"
   register: result
   changed_when: result is not succeeded
@@ -142,7 +142,7 @@
   args:
     executable: "/bin/bash"
     creates: "/etc/ceph/ceph.client.admin.keyring"
-  when: ansible_hostname == ansible_play_hosts[0]
+  when: inventory_hostname == ansible_play_hosts[0]
   delegate_to: "{{ ansible_play_hosts[0] }}"
   register: result
   changed_when: result is not succeeded
@@ -160,7 +160,7 @@
       - "/var/lib/ceph/tmp/ceph.mon.keyring"
   args:
     executable: "/bin/bash"
-  when: ansible_hostname != ansible_play_hosts[0]
+  when: inventory_hostname != ansible_play_hosts[0]
   delegate_to: "{{ ansible_play_hosts[0] }}"
   register: base64_encode_result
   changed_when: base64_encode_result is not succeeded
@@ -172,7 +172,7 @@
     echo -n {{ base64_encode_result.stdout | quote }} | base64 -d | tar zx -C /
   args:
     executable: "/bin/bash"
-  when: ansible_hostname != ansible_play_hosts[0]
+  when: inventory_hostname != ansible_play_hosts[0]
   register: base64_decode_result
   changed_when: base64_decode_result is not succeeded
   tags: ceph_mon
@@ -210,16 +210,16 @@
     set -o pipefail
     ceph-mon \
       --mkfs \
-      --id {{ ansible_hostname }} \
+      --id {{ inventory_hostname }} \
       --cluster ceph \
       --setuser ceph \
       --setgroup ceph \
       --keyring /var/lib/ceph/tmp/ceph.mon.keyring
-    chown ceph:ceph /var/lib/ceph/mon/ceph-{{ ansible_hostname }}/keyring
-    chmod 0600 /var/lib/ceph/mon/ceph-{{ ansible_hostname }}/keyring
+    chown ceph:ceph /var/lib/ceph/mon/ceph-{{ inventory_hostname }}/keyring
+    chmod 0600 /var/lib/ceph/mon/ceph-{{ inventory_hostname }}/keyring
   args:
     executable: "/bin/bash"
-    creates: "/var/lib/ceph/mon/ceph-{{ ansible_hostname }}/keyring"
+    creates: "/var/lib/ceph/mon/ceph-{{ inventory_hostname }}/keyring"
   register: result
   changed_when: result is not succeeded
   notify:
@@ -235,14 +235,14 @@
     state: "{{ item.state | default('file') }}"
   loop:
     - { dest: "/lib/systemd/system/ceph-mon@.service" }
-    - { dest: "/var/lib/ceph/mon/ceph-{{ ansible_hostname }}/keyring", owner: "ceph", group: "ceph", mode: "0600" }
+    - { dest: "/var/lib/ceph/mon/ceph-{{ inventory_hostname }}/keyring", owner: "ceph", group: "ceph", mode: "0600" }
   notify:
     - ceph_mon | systemctl restart ceph-mon.target
   tags: ceph_mon
 
-- name: "systemctl start ceph-mon@{{ ansible_hostname }}"
+- name: "systemctl start ceph-mon@{{ inventory_hostname }}"
   service:
-    name: "ceph-mon@{{ ansible_hostname }}"
+    name: "ceph-mon@{{ inventory_hostname }}"
     state: "started"
     enabled: true
   changed_when: false

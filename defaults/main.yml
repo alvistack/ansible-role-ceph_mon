@@ -17,7 +17,7 @@
 # Ceph version.
 ceph_release: "15.2"
 
-# Ceph mon configs.
+# Ceph Monitor configs.
 ceph_mon_config:
   - { state: "present", section: "mon", option: "mon allow pool delete", value: "true" }
   - { state: "present", section: "mon", option: "mon memory autotune", value: "true" }

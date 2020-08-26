@@ -58,6 +58,7 @@
   loop:
     - { dest: "/etc/ceph" }
     - { dest: "/lib/systemd/system" }
+    - { dest: "/lib/systemd/system/ceph-mon.target.d" }
     - { dest: "/var/lib/ceph/bootstrap-mds", owner: "ceph", group: "ceph" }
     - { dest: "/var/lib/ceph/bootstrap-mgr", owner: "ceph", group: "ceph" }
     - { dest: "/var/lib/ceph/bootstrap-osd", owner: "ceph", group: "ceph" }
@@ -241,9 +242,9 @@
     - ceph_mon | systemctl restart ceph-mon.target
   tags: ceph_mon
 
-- name: "systemctl start ceph-mon@{{ inventory_hostname }}"
+- name: "systemctl start ceph-mon@{{ inventory_hostname }}.service"
   service:
-    name: "ceph-mon@{{ inventory_hostname }}"
+    name: "ceph-mon@{{ inventory_hostname }}.service"
     state: "started"
     enabled: true
   changed_when: false

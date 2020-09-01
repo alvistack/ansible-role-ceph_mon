@@ -8,6 +8,7 @@ Description=Ceph cluster monitor daemon
 # configuration.
 After=network-online.target local-fs.target time-sync.target
 Wants=network-online.target local-fs.target time-sync.target
+RequiresMountsFor=/var/lib/ceph
 PartOf=ceph-mon.target
 
 [Service]

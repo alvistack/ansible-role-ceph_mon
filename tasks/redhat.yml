@@ -23,4 +23,3 @@
   until: result is succeeded
   notify:
     - ceph_mon | systemctl restart ceph-mon.target
-  tags: ceph_mon

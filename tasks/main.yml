@@ -16,7 +16,6 @@
 
 - name: include default variables
   include_vars: "../vars/main.yml"
-  tags: ceph_mon
 
 - name: include release specific variables
   include_vars: "{{ lookup('first_found', _params) }}"
@@ -31,7 +30,6 @@
       paths:
         - "../vars"
   ignore_errors: true
-  tags: ceph_mon
 
 - name: include release specific tasks
   include_tasks: "{{ lookup('first_found', _params) }}"
@@ -46,7 +44,6 @@
       paths:
         - "."
   ignore_errors: true
-  tags: ceph_mon
 
 - name: prepare directories
   file:
@@ -65,7 +62,6 @@
     - { dest: "/var/lib/ceph/bootstrap-rgw", owner: "ceph", group: "ceph" }
     - { dest: "/var/lib/ceph/mon/ceph-{{ inventory_hostname }}", owner: "ceph", group: "ceph" }
     - { dest: "/var/lib/ceph/tmp", owner: "ceph", group: "ceph" }
-  tags: ceph_mon
 
 - name: touch files
   copy:
@@ -77,7 +73,6 @@
     force: false
   loop:
     - { dest: "/etc/ceph/ceph.conf", owner: "ceph", group: "ceph" }
-  tags: ceph_mon
 
 - name: tweak settings in ini files
   ini_file:
@@ -90,7 +85,6 @@
   loop: "{{ ceph_mon_config }}"
   notify:
     - ceph_mon | systemctl restart ceph-mon.target
-  tags: ceph_mon
 
 - name: prepare files
   file:
@@ -103,7 +97,6 @@
     - { dest: "/etc/ceph/ceph.conf", owner: "ceph", group: "ceph" }
   notify:
     - ceph_mon | systemctl restart ceph-mon.target
-  tags: ceph_mon
 
 - name: create monitor initial keyring
   shell: |
@@ -124,7 +117,6 @@
   changed_when: result is not succeeded
   notify:
     - ceph_mon | systemctl restart ceph-mon.target
-  tags: ceph_mon
 
 - name: create and import admin keyring
   shell: |
@@ -150,7 +142,6 @@
   changed_when: result is not succeeded
   notify:
     - ceph_mon | systemctl restart ceph-mon.target
-  tags: ceph_mon
 
 - name: base64 encode
   shell: |
@@ -166,7 +157,6 @@
   delegate_to: "{{ ansible_play_hosts[0] }}"
   register: base64_encode_result
   changed_when: base64_encode_result is not succeeded
-  tags: ceph_mon
 
 - name: base64 decode
   shell: |
@@ -177,7 +167,6 @@
   when: inventory_hostname != ansible_play_hosts[0]
   register: base64_decode_result
   changed_when: base64_decode_result is not succeeded
-  tags: ceph_mon
 
 - name: prepare files
   file:
@@ -191,7 +180,6 @@
     - { dest: "/var/lib/ceph/tmp/ceph.mon.keyring", owner: "ceph", group: "ceph", mode: "0600" }
   notify:
     - ceph_mon | systemctl restart ceph-mon.target
-  tags: ceph_mon
 
 - name: copy templates
   template:
@@ -206,7 +194,6 @@
   notify:
     - ceph_mon | systemctl daemon-reload
     - ceph_mon | systemctl restart ceph-mon.target
-  tags: ceph_mon
 
 - name: ceph monitor mkfs with keyring
   shell: |
@@ -227,7 +214,6 @@
   changed_when: result is not succeeded
   notify:
     - ceph_mon | systemctl restart ceph-mon.target
-  tags: ceph_mon
 
 - name: prepare files
   file:
@@ -243,7 +229,6 @@
   notify:
     - ceph_mon | systemctl daemon-reload
     - ceph_mon | systemctl restart ceph-mon.target
-  tags: ceph_mon
 
 - name: "systemctl start ceph-mon@{{ inventory_hostname }}.service"
   service:
@@ -252,7 +237,6 @@
     enabled: true
   changed_when: false
   ignore_errors: true
-  tags: ceph_mon
 
 - name: systemctl start ceph-mon.target
   service:
@@ -261,11 +245,9 @@
     enabled: true
   changed_when: false
   ignore_errors: true
-  tags: ceph_mon
 
 - name: flush handlers
   meta: flush_handlers
-  tags: ceph_mon
 
 - name: ceph auth get client.bootstrap-*
   shell: |
@@ -288,7 +270,6 @@
   register: result
   until: result is succeeded
   changed_when: result is not succeeded
-  tags: ceph_mon
 
 - name: prepare files
   file:
@@ -302,4 +283,3 @@
     - { dest: "/var/lib/ceph/bootstrap-mgr/ceph.keyring", owner: "ceph", group: "ceph", mode: "0600" }
     - { dest: "/var/lib/ceph/bootstrap-osd/ceph.keyring", owner: "ceph", group: "ceph", mode: "0600" }
     - { dest: "/var/lib/ceph/bootstrap-rgw/ceph.keyring", owner: "ceph", group: "ceph", mode: "0600" }
-  tags: ceph_mon

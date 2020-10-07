@@ -230,6 +230,9 @@
     - ceph_mon | systemctl daemon-reload
     - ceph_mon | systemctl restart ceph-mon.target
 
+- name: flush handlers
+  meta: flush_handlers
+
 - name: "systemctl start ceph-mon@{{ inventory_hostname }}.service"
   service:
     name: "ceph-mon@{{ inventory_hostname }}.service"
@@ -245,9 +248,6 @@
     enabled: true
   changed_when: false
   ignore_errors: true
-
-- name: flush handlers
-  meta: flush_handlers
 
 - name: ceph auth get client.bootstrap-*
   shell: |

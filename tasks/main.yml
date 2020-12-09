@@ -100,7 +100,7 @@
 
 - name: create monitor initial keyring
   shell: |
-    set -o pipefail
+    set -euo pipefail
     ceph-authtool \
       --gen-key \
       --name mon. \
@@ -120,7 +120,7 @@
 
 - name: create and import admin keyring
   shell: |
-    set -o pipefail
+    set -euo pipefail
     ceph-authtool \
       --gen-key \
       --name client.admin \
@@ -145,7 +145,7 @@
 
 - name: base64 encode
   shell: |
-    set -o pipefail
+    set -euo pipefail
     tar zcfP - {{ _params | join(' ') }} | base64 -w 0
   vars:
     _params:
@@ -160,7 +160,7 @@
 
 - name: base64 decode
   shell: |
-    set -o pipefail
+    set -euo pipefail
     echo -n {{ base64_encode_result.stdout | quote }} | base64 -d | tar zx -C /
   args:
     executable: "/bin/bash"
@@ -197,7 +197,7 @@
 
 - name: ceph monitor mkfs with keyring
   shell: |
-    set -o pipefail
+    set -euo pipefail
     ceph-mon \
       --mkfs \
       --id {{ inventory_hostname }} \
@@ -251,7 +251,7 @@
 
 - name: ceph auth get client.bootstrap-*
   shell: |
-    set -o pipefail
+    set -euo pipefail
     ceph \
       auth get client.{{ item.client }} \
       --out-file /var/lib/ceph/{{ item.client }}/ceph.keyring

@@ -21,4 +21,5 @@ ceph_release: "15.2"
 ceph_mon_config:
   - { state: "present", section: "mon", option: "mon allow pool delete", value: "true" }
   - { state: "present", section: "mon", option: "mon memory autotune", value: "true" }
-  - { state: "present", section: "mon", option: "mon memory target", value: "536870912" }
+  - { state: "present", section: "mon", option: "mon memory target", value: "268435456" }
+  - { state: "present", section: "mon", option: "rocksdb cache size", value: "134217728" }

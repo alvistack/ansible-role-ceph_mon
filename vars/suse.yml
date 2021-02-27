@@ -16,4 +16,5 @@
 
 _zypper:
   "15.2":
+    - { state: "latest", name: "tar" }
     - { state: "latest", name: "ceph-mon" }

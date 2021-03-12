@@ -18,7 +18,8 @@
   remote_user: root
   become: true
   tasks:
-    - include_role:
+    - name: include role
+      include_role:
         name: ceph_common
       tags: ceph_common
 
@@ -26,6 +27,7 @@
   remote_user: root
   become: true
   tasks:
-    - include_role:
+    - name: include role
+      include_role:
         name: ceph_mon
       tags: ceph_mon

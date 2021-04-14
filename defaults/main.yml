@@ -15,7 +15,7 @@
 # limitations under the License.
 
 # Ceph version.
-ceph_release: "15.2"
+ceph_release: "16.2"
 
 # Ceph Monitor configs.
 ceph_mon_config:

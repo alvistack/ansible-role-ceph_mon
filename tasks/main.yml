@@ -68,7 +68,7 @@
     - { dest: "/var/lib/ceph/bootstrap-mgr", owner: "ceph", group: "ceph" }
     - { dest: "/var/lib/ceph/bootstrap-osd", owner: "ceph", group: "ceph" }
     - { dest: "/var/lib/ceph/bootstrap-rgw", owner: "ceph", group: "ceph" }
-    - { dest: "/var/lib/ceph/mon/ceph-{{ inventory_hostname }}", owner: "ceph", group: "ceph" }
+    - { dest: "/var/lib/ceph/mon", owner: "ceph", group: "ceph" }
     - { dest: "/var/lib/ceph/tmp", owner: "ceph", group: "ceph" }
 
 - name: touch files
@@ -210,6 +210,9 @@
 - name: ceph monitor mkfs with keyring
   shell: |
     set -euxo pipefail
+    mkdir -p /var/lib/ceph/mon/ceph-{{ inventory_hostname }}
+    chown ceph:ceph /var/lib/ceph/mon/ceph-{{ inventory_hostname }}
+    chmod 0755 /var/lib/ceph/mon/ceph-{{ inventory_hostname }}
     ceph-mon \
       --mkfs \
       --id {{ inventory_hostname }} \

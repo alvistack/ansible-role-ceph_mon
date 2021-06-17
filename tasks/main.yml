@@ -272,27 +272,12 @@
   changed_when: false
   failed_when: false
 
-- name: ceph auth get client.bootstrap-*
-  shell: |
-    set -euxo pipefail
-    ceph \
-      auth get client.{{ item.client }} \
-      --out-file /var/lib/ceph/{{ item.client }}/ceph.keyring
-    chown ceph:ceph /var/lib/ceph/{{ item.client }}/ceph.keyring
-    chmod 0400 /var/lib/ceph/{{ item.client }}/ceph.keyring
-  args:
-    executable: "/bin/bash"
-    creates: "/var/lib/ceph/{{ item.client }}/ceph.keyring"
-  loop:
-    - { client: "bootstrap-mgr" }
-    - { client: "bootstrap-osd" }
-    - { client: "bootstrap-mds" }
-    - { client: "bootstrap-rgw" }
-  loop_control:
-    label: { dest: "/var/lib/ceph/{{ item.client }}/ceph.keyring" }
-  register: result
-  until: result is succeeded
-  changed_when: result is not succeeded
+- name: fetch initial keys
+  ceph_key:
+    state: "fetch_initial_keys"
+    owner: "ceph"
+    group: "ceph"
+    mode: "0400"
 
 - name: prepare files
   file:

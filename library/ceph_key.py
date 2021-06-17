@@ -202,30 +202,6 @@ CEPH_INITIAL_KEYS = ['client.admin', 'client.bootstrap-mds', 'client.bootstrap-m
                      'client.bootstrap-osd', 'client.bootstrap-rbd', 'client.bootstrap-rbd-mirror', 'client.bootstrap-rgw']  # noqa E501
 
 
-def generate_ceph_cmd(sub_cmd, args, user_key=None, cluster='ceph', user='client.admin', container_image=None, interactive=False):  # noqa: E501
-    '''
-    Generate 'ceph' command line to execute
-    '''
-
-    if not user_key:
-        user_key = '/etc/ceph/{}.{}.keyring'.format(cluster, user)
-
-    cmd = pre_generate_ceph_cmd(container_image=container_image, interactive=interactive)  # noqa: E501
-
-    base_cmd = [
-        '-n',
-        user,
-        '-k',
-        user_key,
-        '--cluster',
-        cluster
-    ]
-    base_cmd.extend(sub_cmd)
-    cmd.extend(base_cmd + args)
-
-    return cmd
-
-
 def container_exec(binary, container_image, interactive=False):
     '''
     Build the docker CLI to run a command inside a container
@@ -355,6 +331,34 @@ def generate_caps(_type, caps):
         caps_cli.extend([k, v])
 
     return caps_cli
+
+
+def generate_ceph_cmd(cluster, args, user, user_key_path, container_image=None):
+    '''
+    Generate 'ceph' command line to execute
+    '''
+
+    if container_image:
+        binary = 'ceph'
+        cmd = container_exec(
+            binary, container_image)
+    else:
+        binary = ['ceph']
+        cmd = binary
+
+    base_cmd = [
+        '-n',
+        user,
+        '-k',
+        user_key_path,
+        '--cluster',
+        cluster,
+        'auth',
+    ]
+
+    cmd.extend(base_cmd + args)
+
+    return cmd
 
 
 def generate_ceph_authtool_cmd(cluster, name, secret, caps, dest, container_image=None):  # noqa E501

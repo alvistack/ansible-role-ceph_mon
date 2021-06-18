@@ -108,14 +108,17 @@
 
 - name: create mon. keyring
   ceph_key:
-    name: "mon."
-    dest: "/var/lib/ceph/tmp/ceph.mon.keyring"
-    caps:
-      mon: "allow *"
-    owner: "ceph"
-    group: "ceph"
-    mode: "0400"
+    name: "{{ item.name }}"
+    dest: "{{ item.dest }}"
+    caps: "{{ item.caps }}"
+    owner: "{{ item.owner | default('ceph') }}"
+    group: "{{ item.group | default('ceph') }}"
+    mode: "{{ item.mode | default('0400') }}"
     import_key: false
+  loop:
+    - name: "mon."
+      dest: "/var/lib/ceph/tmp/ceph.mon.keyring"
+      caps: { mon: "allow *" }
   when: inventory_hostname == ansible_play_hosts[0]
   delegate_to: "{{ ansible_play_hosts[0] }}"
   register: result
@@ -125,17 +128,17 @@
 
 - name: create client.admin keyring
   ceph_key:
-    name: "client.admin"
-    dest: "/etc/ceph/ceph.client.admin.keyring"
-    caps:
-      mon: "allow *"
-      mgr: "allow *"
-      osd: "allow *"
-      mds: "allow *"
-    owner: "ceph"
-    group: "ceph"
-    mode: "0400"
+    name: "{{ item.name }}"
+    dest: "{{ item.dest }}"
+    caps: "{{ item.caps }}"
+    owner: "{{ item.owner | default('ceph') }}"
+    group: "{{ item.group | default('ceph') }}"
+    mode: "{{ item.mode | default('0400') }}"
     import_key: false
+  loop:
+    - name: "client.admin"
+      dest: "/etc/ceph/ceph.client.admin.keyring"
+      caps: { mon: "allow *", mgr: "allow *", osd: "allow *", mds: "allow *" }
   when: inventory_hostname == ansible_play_hosts[0]
   delegate_to: "{{ ansible_play_hosts[0] }}"
   register: result

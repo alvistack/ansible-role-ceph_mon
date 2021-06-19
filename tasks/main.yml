@@ -67,6 +67,8 @@
     - { dest: "/var/lib/ceph/bootstrap-mds", owner: "ceph", group: "ceph" }
     - { dest: "/var/lib/ceph/bootstrap-mgr", owner: "ceph", group: "ceph" }
     - { dest: "/var/lib/ceph/bootstrap-osd", owner: "ceph", group: "ceph" }
+    - { dest: "/var/lib/ceph/bootstrap-rbd", owner: "ceph", group: "ceph" }
+    - { dest: "/var/lib/ceph/bootstrap-rbd-mirror", owner: "ceph", group: "ceph" }
     - { dest: "/var/lib/ceph/bootstrap-rgw", owner: "ceph", group: "ceph" }
     - { dest: "/var/lib/ceph/mon", owner: "ceph", group: "ceph" }
     - { dest: "/var/lib/ceph/tmp", owner: "ceph", group: "ceph" }
@@ -110,7 +112,7 @@
   ceph_key:
     name: "{{ item.name }}"
     dest: "{{ item.dest }}"
-    caps: "{{ item.caps }}"
+    caps: "{{ item.caps | default(omit) }}"
     owner: "{{ item.owner | default('ceph') }}"
     group: "{{ item.group | default('ceph') }}"
     mode: "{{ item.mode | default('0400') }}"
@@ -121,8 +123,6 @@
       caps: { mon: "allow *" }
   when: inventory_hostname == ansible_play_hosts[0]
   delegate_to: "{{ ansible_play_hosts[0] }}"
-  register: result
-  changed_when: result is not succeeded
   notify:
     - ceph_mon | systemctl restart ceph-mon.target
 
@@ -130,7 +130,7 @@
   ceph_key:
     name: "{{ item.name }}"
     dest: "{{ item.dest }}"
-    caps: "{{ item.caps }}"
+    caps: "{{ item.caps | default(omit) }}"
     owner: "{{ item.owner | default('ceph') }}"
     group: "{{ item.group | default('ceph') }}"
     mode: "{{ item.mode | default('0400') }}"
@@ -141,8 +141,6 @@
       caps: { mon: "allow *", mgr: "allow *", osd: "allow *", mds: "allow *" }
   when: inventory_hostname == ansible_play_hosts[0]
   delegate_to: "{{ ansible_play_hosts[0] }}"
-  register: result
-  changed_when: result is not succeeded
   notify:
     - ceph_mon | systemctl restart ceph-mon.target
 
@@ -277,10 +275,25 @@
 
 - name: fetch initial keys
   ceph_key:
-    state: "fetch_initial_keys"
-    owner: "ceph"
-    group: "ceph"
-    mode: "0400"
+    name: "{{ item.name }}"
+    dest: "{{ item.dest }}"
+    caps: "{{ item.caps | default(omit) }}"
+    owner: "{{ item.owner | default('ceph') }}"
+    group: "{{ item.group | default('ceph') }}"
+    mode: "{{ item.mode | default('0400') }}"
+  loop:
+    - name: "client.bootstrap-mds"
+      dest: "/var/lib/ceph/bootstrap-mds/ceph.keyring"
+    - name: "client.bootstrap-mgr"
+      dest: "/var/lib/ceph/bootstrap-mgr/ceph.keyring"
+    - name: "client.bootstrap-osd"
+      dest: "/var/lib/ceph/bootstrap-osd/ceph.keyring"
+    - name: "client.bootstrap-rbd-mirror"
+      dest: "/var/lib/ceph/bootstrap-rbd-mirror/ceph.keyring"
+    - name: "client.bootstrap-rbd"
+      dest: "/var/lib/ceph/bootstrap-rbd/ceph.keyring"
+    - name: "client.bootstrap-rgw"
+      dest: "/var/lib/ceph/bootstrap-rgw/ceph.keyring"
 
 - name: prepare files
   file:
@@ -293,4 +306,6 @@
     - { dest: "/var/lib/ceph/bootstrap-mds/ceph.keyring", owner: "ceph", group: "ceph", mode: "0400" }
     - { dest: "/var/lib/ceph/bootstrap-mgr/ceph.keyring", owner: "ceph", group: "ceph", mode: "0400" }
     - { dest: "/var/lib/ceph/bootstrap-osd/ceph.keyring", owner: "ceph", group: "ceph", mode: "0400" }
+    - { dest: "/var/lib/ceph/bootstrap-rbd-mirror/ceph.keyring", owner: "ceph", group: "ceph", mode: "0400" }
+    - { dest: "/var/lib/ceph/bootstrap-rbd/ceph.keyring", owner: "ceph", group: "ceph", mode: "0400" }
     - { dest: "/var/lib/ceph/bootstrap-rgw/ceph.keyring", owner: "ceph", group: "ceph", mode: "0400" }

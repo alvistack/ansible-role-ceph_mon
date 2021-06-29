@@ -62,8 +62,6 @@
     state: "{{ item.state | default('directory') }}"
   loop:
     - { dest: "/etc/ceph" }
-    - { dest: "/lib/systemd/system" }
-    - { dest: "/lib/systemd/system/ceph-mon.target.d" }
     - { dest: "/var/lib/ceph/bootstrap-mds", owner: "ceph", group: "ceph" }
     - { dest: "/var/lib/ceph/bootstrap-mgr", owner: "ceph", group: "ceph" }
     - { dest: "/var/lib/ceph/bootstrap-osd", owner: "ceph", group: "ceph" }
@@ -196,24 +194,6 @@
   notify:
     - ceph_mon | systemctl restart ceph-mon.target
 
-- name: tweak settings in ini files
-  ini_file:
-    section: "{{ item.section }}"
-    option: "{{ item.option }}"
-    value: "{{ item.value }}"
-    state: "{{ item.state }}"
-    path: "/lib/systemd/system/ceph-mon@.service"
-    no_extra_spaces: true
-    mode: "0644"
-  loop:
-    - { state: "present", section: "Service", option: "ProtectClock", value: "false" }
-    - { state: "present", section: "Service", option: "ProtectHostname", value: "false" }
-    - { state: "present", section: "Service", option: "ProtectKernelLogs", value: "false" }
-    - { state: "present", section: "Service", option: "RestrictSUIDSGID", value: "false" }
-  notify:
-    - ceph_mon | systemctl daemon-reload
-    - ceph_mon | systemctl restart ceph-mon.target
-
 - name: ceph monitor mkfs with keyring
   shell: |
     set -euxo pipefail
@@ -245,11 +225,8 @@
     mode: "{{ item.mode | default('0644') }}"
     state: "{{ item.state | default('file') }}"
   loop:
-    - { dest: "/lib/systemd/system/ceph-mon.target" }
-    - { dest: "/lib/systemd/system/ceph-mon@.service" }
     - { dest: "/var/lib/ceph/mon/ceph-{{ inventory_hostname }}/keyring", owner: "ceph", group: "ceph", mode: "0400" }
   notify:
-    - ceph_mon | systemctl daemon-reload
     - ceph_mon | systemctl restart ceph-mon.target
 
 - name: flush handlers

@@ -20,6 +20,7 @@ ceph_release: "16.2"
 # Ceph Monitor configs.
 ceph_mon_config:
   - { state: "present", section: "mon", option: "auth allow insecure global id reclaim", value: "false" }
+  - { state: "present", section: "mon", option: "debug mon", value: "0" }
   - { state: "present", section: "mon", option: "mon allow pool delete", value: "true" }
   - { state: "present", section: "mon", option: "mon data avail crit", value: "5" }
   - { state: "present", section: "mon", option: "mon data avail warn", value: "15" }

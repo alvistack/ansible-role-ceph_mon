@@ -114,6 +114,7 @@
     owner: "{{ item.owner | default('ceph') }}"
     group: "{{ item.group | default('ceph') }}"
     mode: "{{ item.mode | default('0400') }}"
+    state: "present"
     import_key: false
   loop:
     - name: "mon."
@@ -132,6 +133,7 @@
     owner: "{{ item.owner | default('ceph') }}"
     group: "{{ item.group | default('ceph') }}"
     mode: "{{ item.mode | default('0400') }}"
+    state: "present"
     import_key: false
   loop:
     - name: "client.admin"
@@ -258,19 +260,26 @@
     owner: "{{ item.owner | default('ceph') }}"
     group: "{{ item.group | default('ceph') }}"
     mode: "{{ item.mode | default('0400') }}"
+    state: "present"
   loop:
     - name: "client.bootstrap-mds"
       dest: "/var/lib/ceph/bootstrap-mds/ceph.keyring"
+      caps: { mon: "allow profile bootstrap-mds" }
     - name: "client.bootstrap-mgr"
       dest: "/var/lib/ceph/bootstrap-mgr/ceph.keyring"
+      caps: { mon: "allow profile bootstrap-mgr" }
     - name: "client.bootstrap-osd"
       dest: "/var/lib/ceph/bootstrap-osd/ceph.keyring"
+      caps: { mon: "allow profile bootstrap-osd" }
     - name: "client.bootstrap-rbd-mirror"
       dest: "/var/lib/ceph/bootstrap-rbd-mirror/ceph.keyring"
+      caps: { mon: "allow profile bootstrap-rbd-mirror" }
     - name: "client.bootstrap-rbd"
       dest: "/var/lib/ceph/bootstrap-rbd/ceph.keyring"
+      caps: { mon: "allow profile bootstrap-rbd" }
     - name: "client.bootstrap-rgw"
       dest: "/var/lib/ceph/bootstrap-rgw/ceph.keyring"
+      caps: { mon: "allow profile bootstrap-rgw" }
 
 - name: prepare files
   file:

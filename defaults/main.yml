@@ -19,10 +19,13 @@ ceph_release: "16.2"
 
 # Ceph Monitor configs.
 ceph_mon_config:
-  - { state: "present", section: "mon", option: "auth allow insecure global id reclaim", value: "false" }
-  - { state: "present", section: "mon", option: "mon allow pool delete", value: "true" }
-  - { state: "present", section: "mon", option: "mon data avail crit", value: "5" }
-  - { state: "present", section: "mon", option: "mon data avail warn", value: "15" }
-  - { state: "present", section: "mon", option: "mon memory autotune", value: "false" }
-  - { state: "present", section: "mon", option: "mon memory target", value: "67108864" }
-  - { state: "present", section: "mon", option: "mon warn on insecure global id reclaim allowed", value: "true" }
+  - { state: "present", section: "mon", option: "auth_allow_insecure_global_id_reclaim", value: "false" }
+  - { state: "present", section: "mon", option: "mon_allow_pool_delete", value: "true" }
+  - { state: "present", section: "mon", option: "mon_client_bytes", value: "33554432" }
+  - { state: "present", section: "mon", option: "mon_daemon_bytes", value: "67108864" }
+  - { state: "present", section: "mon", option: "mon_data_avail_crit", value: "5" }
+  - { state: "present", section: "mon", option: "mon_data_avail_warn", value: "15" }
+  - { state: "present", section: "mon", option: "mon_memory_autotune", value: "false" }
+  - { state: "present", section: "mon", option: "mon_memory_target", value: "134217728" }
+  - { state: "present", section: "mon", option: "mon_osd_cache_size_min", value: "33554432" }
+  - { state: "present", section: "mon", option: "mon_warn_on_insecure_global_id_reclaim_allowed", value: "true" }

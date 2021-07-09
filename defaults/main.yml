@@ -29,3 +29,4 @@ ceph_mon_config:
   - { state: "present", section: "mon", option: "mon_memory_target", value: "134217728" }
   - { state: "present", section: "mon", option: "mon_osd_cache_size_min", value: "33554432" }
   - { state: "present", section: "mon", option: "mon_warn_on_insecure_global_id_reclaim_allowed", value: "true" }
+  - { state: "present", section: "mon", option: "mon_warn_on_too_few_osds", value: "false" }

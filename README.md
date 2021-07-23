@@ -1,13 +1,9 @@
 # Ansible Role for Ceph Monitor Daemon
 
-[![Gitlab pipeline
-status](https://img.shields.io/gitlab/pipeline/alvistack/ansible-role-ceph_mon/master)](https://gitlab.com/alvistack/ansible-role-ceph_mon/-/pipelines)
-[![GitHub
-release](https://img.shields.io/github/release/alvistack/ansible-role-ceph_mon.svg)](https://github.com/alvistack/ansible-role-ceph_mon/releases)
-[![GitHub
-license](https://img.shields.io/github/license/alvistack/ansible-role-ceph_mon.svg)](https://github.com/alvistack/ansible-role-ceph_mon/blob/master/LICENSE)
-[![Ansible
-Role](https://img.shields.io/badge/galaxy-alvistack.ceph_mon-blue.svg)](https://galaxy.ansible.com/alvistack/ceph_mon)
+[![Gitlab pipeline status](https://img.shields.io/gitlab/pipeline/alvistack/ansible-role-ceph_mon/master)](https://gitlab.com/alvistack/ansible-role-ceph_mon/-/pipelines)
+[![GitHub release](https://img.shields.io/github/release/alvistack/ansible-role-ceph_mon.svg)](https://github.com/alvistack/ansible-role-ceph_mon/releases)
+[![GitHub license](https://img.shields.io/github/license/alvistack/ansible-role-ceph_mon.svg)](https://github.com/alvistack/ansible-role-ceph_mon/blob/master/LICENSE)
+[![Ansible Role](https://img.shields.io/badge/galaxy-alvistack.ceph_mon-blue.svg)](https://galaxy.ansible.com/alvistack/ceph_mon)
 
 Ansible Role for Ceph Monitor Daemon Installation.
 
@@ -43,8 +39,7 @@ This role could simply deploy to `localhost` as below:
 ## License
 
   - Code released under [Apache License 2.0](LICENSE)
-  - Docs released under [CC BY
-    4.0](http://creativecommons.org/licenses/by/4.0/)
+  - Docs released under [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/)
 
 ## Author Information
 

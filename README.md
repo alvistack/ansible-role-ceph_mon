@@ -1,5 +1,7 @@
 # Ansible Role for Ceph Monitor Daemon
 
+<img src="/alvistack.svg" width="75" alt="AlviStack">
+
 [![Gitlab pipeline status](https://img.shields.io/gitlab/pipeline/alvistack/ansible-role-ceph_mon/master)](https://gitlab.com/alvistack/ansible-role-ceph_mon/-/pipelines)
 [![GitHub release](https://img.shields.io/github/release/alvistack/ansible-role-ceph_mon.svg)](https://github.com/alvistack/ansible-role-ceph_mon/releases)
 [![GitHub license](https://img.shields.io/github/license/alvistack/ansible-role-ceph_mon.svg)](https://github.com/alvistack/ansible-role-ceph_mon/blob/master/LICENSE)

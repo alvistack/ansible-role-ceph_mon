@@ -15,7 +15,7 @@
 # limitations under the License.
 
 - name: ceph_mon | systemctl restart ceph-mon.target
-  service:
+  ansible.builtin.service:
     name: "ceph-mon.target"
     state: "restarted"
     enabled: true

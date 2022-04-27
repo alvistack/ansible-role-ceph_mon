@@ -20,10 +20,10 @@ collections:
     version: ">=0.0.0,<1.0.0"
 
 roles:
-  - name: chrony
+  - name: alvistack.chrony
     src: https://github.com/alvistack/ansible-role-chrony
     version: develop
 
-  - name: ceph_common
+  - name: alvistack.ceph_common
     src: https://github.com/alvistack/ansible-role-ceph_common
     version: develop

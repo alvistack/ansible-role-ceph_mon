@@ -234,7 +234,7 @@
 - name: flush handlers
   ansible.builtin.meta: flush_handlers
 
-- name: "systemctl start ceph-mon@{{ inventory_hostname }}.service"
+- name: systemctl start ceph-mon@*.service
   ansible.builtin.service:
     name: "ceph-mon@{{ inventory_hostname }}.service"
     state: "started"

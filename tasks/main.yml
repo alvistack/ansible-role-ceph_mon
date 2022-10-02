@@ -145,10 +145,11 @@
     - ceph_mon | systemctl restart ceph-mon.target
 
 - name: import client.admin keyring into mon. keyring
-  ansible.builtin.shell: |
-    set -euxo pipefail
-    ceph-authtool /var/lib/ceph/tmp/ceph.mon.keyring \
-      --import-keyring /etc/ceph/ceph.client.admin.keyring
+  ansible.builtin.shell:
+    cmd: |
+      set -euxo pipefail
+      ceph-authtool /var/lib/ceph/tmp/ceph.mon.keyring \
+        --import-keyring /etc/ceph/ceph.client.admin.keyring
   args:
     executable: "/bin/bash"
   when: inventory_hostname == ansible_play_hosts[0]
@@ -159,9 +160,10 @@
     - ceph_mon | systemctl restart ceph-mon.target
 
 - name: base64 encode
-  ansible.builtin.shell: |
-    set -euxo pipefail
-    tar zcfP - {{ _params | join(' ') }} | base64 -w 0
+  ansible.builtin.shell:
+    cmd: |
+      set -euxo pipefail
+      tar zcfP - {{ _params | join(' ') }} | base64 -w 0
   vars:
     _params:
       - "/etc/ceph/ceph.client.admin.keyring"
@@ -174,9 +176,10 @@
   changed_when: base64_encode_result is not succeeded
 
 - name: base64 decode
-  ansible.builtin.shell: |
-    set -euxo pipefail
-    echo -n {{ base64_encode_result.stdout | quote }} | base64 -d | tar zx -C /
+  ansible.builtin.shell:
+    cmd: |
+      set -euxo pipefail
+      echo -n {{ base64_encode_result.stdout | quote }} | base64 -d | tar zx -C /
   args:
     executable: "/bin/bash"
   when: inventory_hostname != ansible_play_hosts[0]
@@ -197,20 +200,21 @@
     - ceph_mon | systemctl restart ceph-mon.target
 
 - name: ceph monitor mkfs with keyring
-  ansible.builtin.shell: |
-    set -euxo pipefail
-    mkdir -p /var/lib/ceph/mon/ceph-{{ inventory_hostname }}
-    chown ceph:ceph /var/lib/ceph/mon/ceph-{{ inventory_hostname }}
-    chmod 0755 /var/lib/ceph/mon/ceph-{{ inventory_hostname }}
-    ceph-mon \
-      --mkfs \
-      --id {{ inventory_hostname }} \
-      --cluster ceph \
-      --setuser ceph \
-      --setgroup ceph \
-      --keyring /var/lib/ceph/tmp/ceph.mon.keyring
-    chown ceph:ceph /var/lib/ceph/mon/ceph-{{ inventory_hostname }}/keyring
-    chmod 0400 /var/lib/ceph/mon/ceph-{{ inventory_hostname }}/keyring
+  ansible.builtin.shell:
+    cmd: |
+      set -euxo pipefail
+      mkdir -p /var/lib/ceph/mon/ceph-{{ inventory_hostname }}
+      chown ceph:ceph /var/lib/ceph/mon/ceph-{{ inventory_hostname }}
+      chmod 0755 /var/lib/ceph/mon/ceph-{{ inventory_hostname }}
+      ceph-mon \
+        --mkfs \
+        --id {{ inventory_hostname }} \
+        --cluster ceph \
+        --setuser ceph \
+        --setgroup ceph \
+        --keyring /var/lib/ceph/tmp/ceph.mon.keyring
+      chown ceph:ceph /var/lib/ceph/mon/ceph-{{ inventory_hostname }}/keyring
+      chmod 0400 /var/lib/ceph/mon/ceph-{{ inventory_hostname }}/keyring
   args:
     executable: "/bin/bash"
     creates: "/var/lib/ceph/mon/ceph-{{ inventory_hostname }}/keyring"

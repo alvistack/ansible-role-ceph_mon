@@ -1,5 +1,4 @@
 ---
-
 # Copyright 2024 Wong Hoi Sing Edison <hswong3i@pantarei-design.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,7 +14,7 @@
 # limitations under the License.
 
 - name: include default variables
-  ansible.builtin.include_vars: "../vars/main.yml"
+  ansible.builtin.include_vars: ../vars/main.yml
 
 - name: include release specific variables
   ansible.builtin.include_vars: "{{ _loop_var }}"
@@ -32,7 +31,7 @@
         - "{{ ansible_os_family | lower }}-{{ ansible_distribution_major_version | lower }}.yml"
         - "{{ ansible_os_family | lower }}.yml"
       paths:
-        - "../vars"
+        - ../vars
       skip: true
 
 - name: include release specific tasks
@@ -50,7 +49,7 @@
         - "{{ ansible_os_family | lower }}-{{ ansible_distribution_major_version | lower }}.yml"
         - "{{ ansible_os_family | lower }}.yml"
       paths:
-        - "."
+        - .
       skip: true
 
 - name: prepare directories
@@ -61,15 +60,15 @@
     mode: "{{ item.mode | default('0755') }}"
     state: "{{ item.state | default('directory') }}"
   loop:
-    - { dest: "/etc/ceph" }
-    - { dest: "/var/lib/ceph/bootstrap-mds", owner: "ceph", group: "ceph" }
-    - { dest: "/var/lib/ceph/bootstrap-mgr", owner: "ceph", group: "ceph" }
-    - { dest: "/var/lib/ceph/bootstrap-osd", owner: "ceph", group: "ceph" }
-    - { dest: "/var/lib/ceph/bootstrap-rbd", owner: "ceph", group: "ceph" }
-    - { dest: "/var/lib/ceph/bootstrap-rbd-mirror", owner: "ceph", group: "ceph" }
-    - { dest: "/var/lib/ceph/bootstrap-rgw", owner: "ceph", group: "ceph" }
-    - { dest: "/var/lib/ceph/mon", owner: "ceph", group: "ceph" }
-    - { dest: "/var/lib/ceph/tmp", owner: "ceph", group: "ceph" }
+    - { dest: /etc/ceph }
+    - { dest: /var/lib/ceph/bootstrap-mds, owner: ceph, group: ceph }
+    - { dest: /var/lib/ceph/bootstrap-mgr, owner: ceph, group: ceph }
+    - { dest: /var/lib/ceph/bootstrap-osd, owner: ceph, group: ceph }
+    - { dest: /var/lib/ceph/bootstrap-rbd, owner: ceph, group: ceph }
+    - { dest: /var/lib/ceph/bootstrap-rbd-mirror, owner: ceph, group: ceph }
+    - { dest: /var/lib/ceph/bootstrap-rgw, owner: ceph, group: ceph }
+    - { dest: /var/lib/ceph/mon, owner: ceph, group: ceph }
+    - { dest: /var/lib/ceph/tmp, owner: ceph, group: ceph }
 
 - name: touch files
   ansible.builtin.copy:
@@ -80,7 +79,7 @@
     content: ""
     force: false
   loop:
-    - { dest: "/etc/ceph/ceph.conf", owner: "ceph", group: "ceph" }
+    - { dest: /etc/ceph/ceph.conf, owner: ceph, group: ceph }
 
 - name: tweak settings in ini files
   community.general.ini_file:
@@ -88,7 +87,7 @@
     option: "{{ item.option }}"
     value: "{{ item.value }}"
     state: "{{ item.state }}"
-    path: "/etc/ceph/ceph.conf"
+    path: /etc/ceph/ceph.conf
     mode: "0644"
   loop: "{{ ceph_mon_config }}"
   notify:
@@ -102,7 +101,7 @@
     mode: "{{ item.mode | default('0644') }}"
     state: "{{ item.state | default('file') }}"
   loop:
-    - { dest: "/etc/ceph/ceph.conf", owner: "ceph", group: "ceph" }
+    - { dest: /etc/ceph/ceph.conf, owner: ceph, group: ceph }
   notify:
     - ceph_mon | systemctl restart ceph-mon.target
 
@@ -114,12 +113,12 @@
     owner: "{{ item.owner | default('ceph') }}"
     group: "{{ item.group | default('ceph') }}"
     mode: "{{ item.mode | default('0400') }}"
-    state: "present"
+    state: present
     import_key: false
   loop:
-    - name: "mon."
-      dest: "/var/lib/ceph/tmp/ceph.mon.keyring"
-      caps: { mon: "allow *" }
+    - name: mon.
+      dest: /var/lib/ceph/tmp/ceph.mon.keyring
+      caps: { mon: allow * }
   when: inventory_hostname == ansible_play_hosts[0]
   delegate_to: "{{ ansible_play_hosts[0] }}"
   notify:
@@ -133,12 +132,12 @@
     owner: "{{ item.owner | default('ceph') }}"
     group: "{{ item.group | default('ceph') }}"
     mode: "{{ item.mode | default('0400') }}"
-    state: "present"
+    state: present
     import_key: false
   loop:
-    - name: "client.admin"
-      dest: "/etc/ceph/ceph.client.admin.keyring"
-      caps: { mon: "allow *", mgr: "allow *", osd: "allow *", mds: "allow *" }
+    - name: client.admin
+      dest: /etc/ceph/ceph.client.admin.keyring
+      caps: { mon: allow *, mgr: allow *, osd: allow *, mds: allow * }
   when: inventory_hostname == ansible_play_hosts[0]
   delegate_to: "{{ ansible_play_hosts[0] }}"
   notify:
@@ -151,7 +150,7 @@
       ceph-authtool /var/lib/ceph/tmp/ceph.mon.keyring \
         --import-keyring /etc/ceph/ceph.client.admin.keyring
   args:
-    executable: "/bin/bash"
+    executable: /bin/bash
   when: inventory_hostname == ansible_play_hosts[0]
   delegate_to: "{{ ansible_play_hosts[0] }}"
   register: result
@@ -166,10 +165,10 @@
       tar zcfP - {{ _params | join(' ') }} | base64 -w 0
   vars:
     _params:
-      - "/etc/ceph/ceph.client.admin.keyring"
-      - "/var/lib/ceph/tmp/ceph.mon.keyring"
+      - /etc/ceph/ceph.client.admin.keyring
+      - /var/lib/ceph/tmp/ceph.mon.keyring
   args:
-    executable: "/bin/bash"
+    executable: /bin/bash
   when: inventory_hostname != ansible_play_hosts[0]
   delegate_to: "{{ ansible_play_hosts[0] }}"
   register: base64_encode_result
@@ -181,7 +180,7 @@
       set -euxo pipefail
       echo -n {{ base64_encode_result.stdout | quote }} | base64 -d | tar zx -C /
   args:
-    executable: "/bin/bash"
+    executable: /bin/bash
   when: inventory_hostname != ansible_play_hosts[0]
   register: base64_decode_result
   changed_when: base64_decode_result is not succeeded
@@ -194,8 +193,8 @@
     mode: "{{ item.mode | default('0644') }}"
     state: "{{ item.state | default('file') }}"
   loop:
-    - { dest: "/etc/ceph/ceph.client.admin.keyring", owner: "ceph", group: "ceph", mode: "0400" }
-    - { dest: "/var/lib/ceph/tmp/ceph.mon.keyring", owner: "ceph", group: "ceph", mode: "0400" }
+    - { dest: /etc/ceph/ceph.client.admin.keyring, owner: ceph, group: ceph, mode: "0400" }
+    - { dest: /var/lib/ceph/tmp/ceph.mon.keyring, owner: ceph, group: ceph, mode: "0400" }
   notify:
     - ceph_mon | systemctl restart ceph-mon.target
 
@@ -216,8 +215,8 @@
       chown ceph:ceph /var/lib/ceph/mon/ceph-{{ inventory_hostname }}/keyring
       chmod 0400 /var/lib/ceph/mon/ceph-{{ inventory_hostname }}/keyring
   args:
-    executable: "/bin/bash"
-    creates: "/var/lib/ceph/mon/ceph-{{ inventory_hostname }}/keyring"
+    executable: /bin/bash
+    creates: /var/lib/ceph/mon/ceph-{{ inventory_hostname }}/keyring
   register: result
   changed_when: result is not succeeded
   notify:
@@ -231,7 +230,7 @@
     mode: "{{ item.mode | default('0644') }}"
     state: "{{ item.state | default('file') }}"
   loop:
-    - { dest: "/var/lib/ceph/mon/ceph-{{ inventory_hostname }}/keyring", owner: "ceph", group: "ceph", mode: "0400" }
+    - { dest: "/var/lib/ceph/mon/ceph-{{ inventory_hostname }}/keyring", owner: ceph, group: ceph, mode: "0400" }
   notify:
     - ceph_mon | systemctl restart ceph-mon.target
 
@@ -240,16 +239,16 @@
 
 - name: systemctl start ceph-mon@*.service
   ansible.builtin.service:
-    name: "ceph-mon@{{ inventory_hostname }}.service"
-    state: "started"
+    name: ceph-mon@{{ inventory_hostname }}.service
+    state: started
     enabled: true
   changed_when: false
   failed_when: false
 
 - name: systemctl start ceph-mon.target
   ansible.builtin.service:
-    name: "ceph-mon.target"
-    state: "started"
+    name: ceph-mon.target
+    state: started
     enabled: true
   changed_when: false
   failed_when: false
@@ -262,26 +261,26 @@
     owner: "{{ item.owner | default('ceph') }}"
     group: "{{ item.group | default('ceph') }}"
     mode: "{{ item.mode | default('0400') }}"
-    state: "present"
+    state: present
   loop:
-    - name: "client.bootstrap-mds"
-      dest: "/var/lib/ceph/bootstrap-mds/ceph.keyring"
-      caps: { mon: "allow profile bootstrap-mds" }
-    - name: "client.bootstrap-mgr"
-      dest: "/var/lib/ceph/bootstrap-mgr/ceph.keyring"
-      caps: { mon: "allow profile bootstrap-mgr" }
-    - name: "client.bootstrap-osd"
-      dest: "/var/lib/ceph/bootstrap-osd/ceph.keyring"
-      caps: { mon: "allow profile bootstrap-osd" }
-    - name: "client.bootstrap-rbd-mirror"
-      dest: "/var/lib/ceph/bootstrap-rbd-mirror/ceph.keyring"
-      caps: { mon: "allow profile bootstrap-rbd-mirror" }
-    - name: "client.bootstrap-rbd"
-      dest: "/var/lib/ceph/bootstrap-rbd/ceph.keyring"
-      caps: { mon: "allow profile bootstrap-rbd" }
-    - name: "client.bootstrap-rgw"
-      dest: "/var/lib/ceph/bootstrap-rgw/ceph.keyring"
-      caps: { mon: "allow profile bootstrap-rgw" }
+    - name: client.bootstrap-mds
+      dest: /var/lib/ceph/bootstrap-mds/ceph.keyring
+      caps: { mon: allow profile bootstrap-mds }
+    - name: client.bootstrap-mgr
+      dest: /var/lib/ceph/bootstrap-mgr/ceph.keyring
+      caps: { mon: allow profile bootstrap-mgr }
+    - name: client.bootstrap-osd
+      dest: /var/lib/ceph/bootstrap-osd/ceph.keyring
+      caps: { mon: allow profile bootstrap-osd }
+    - name: client.bootstrap-rbd-mirror
+      dest: /var/lib/ceph/bootstrap-rbd-mirror/ceph.keyring
+      caps: { mon: allow profile bootstrap-rbd-mirror }
+    - name: client.bootstrap-rbd
+      dest: /var/lib/ceph/bootstrap-rbd/ceph.keyring
+      caps: { mon: allow profile bootstrap-rbd }
+    - name: client.bootstrap-rgw
+      dest: /var/lib/ceph/bootstrap-rgw/ceph.keyring
+      caps: { mon: allow profile bootstrap-rgw }
 
 - name: prepare files
   ansible.builtin.file:
@@ -291,9 +290,9 @@
     mode: "{{ item.mode | default('0644') }}"
     state: "{{ item.state | default('file') }}"
   loop:
-    - { dest: "/var/lib/ceph/bootstrap-mds/ceph.keyring", owner: "ceph", group: "ceph", mode: "0400" }
-    - { dest: "/var/lib/ceph/bootstrap-mgr/ceph.keyring", owner: "ceph", group: "ceph", mode: "0400" }
-    - { dest: "/var/lib/ceph/bootstrap-osd/ceph.keyring", owner: "ceph", group: "ceph", mode: "0400" }
-    - { dest: "/var/lib/ceph/bootstrap-rbd-mirror/ceph.keyring", owner: "ceph", group: "ceph", mode: "0400" }
-    - { dest: "/var/lib/ceph/bootstrap-rbd/ceph.keyring", owner: "ceph", group: "ceph", mode: "0400" }
-    - { dest: "/var/lib/ceph/bootstrap-rgw/ceph.keyring", owner: "ceph", group: "ceph", mode: "0400" }
+    - { dest: /var/lib/ceph/bootstrap-mds/ceph.keyring, owner: ceph, group: ceph, mode: "0400" }
+    - { dest: /var/lib/ceph/bootstrap-mgr/ceph.keyring, owner: ceph, group: ceph, mode: "0400" }
+    - { dest: /var/lib/ceph/bootstrap-osd/ceph.keyring, owner: ceph, group: ceph, mode: "0400" }
+    - { dest: /var/lib/ceph/bootstrap-rbd-mirror/ceph.keyring, owner: ceph, group: ceph, mode: "0400" }
+    - { dest: /var/lib/ceph/bootstrap-rbd/ceph.keyring, owner: ceph, group: ceph, mode: "0400" }
+    - { dest: /var/lib/ceph/bootstrap-rgw/ceph.keyring, owner: ceph, group: ceph, mode: "0400" }

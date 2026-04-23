@@ -29,13 +29,13 @@ ceph_memtotal_mb: "{{ (((ansible_facts['memtotal_mb'] + 1023) // 1024) * 1024) |
 ceph_mon_config:
   - { state: present, section: mon, option: auth_allow_insecure_global_id_reclaim, value: "false" }  # true
   - { state: present, section: mon, option: mon_allow_pool_delete, value: "true" }  # false
-  - { state: present, section: mon, option: mon_client_bytes, value: "{{ (ceph_memtotal_mb * (32 / 8192) * 1024 * 1024) | int }}" }  # 100Mi / 4 ~= 32Mi
-  - { state: present, section: mon, option: mon_config_key_max_entry_size, value: "{{ (16 * 1024) | int }}" }  # 64Ki / 4 ~= 16Ki
-  - { state: present, section: mon, option: mon_daemon_bytes, value: "{{ (ceph_memtotal_mb * (128 / 8192) * 1024 * 1024) | int }}" }  # 400Mi / 4 ~= 128Mi
+  - { state: present, section: mon, option: mon_client_bytes, value: "{{ (ceph_memtotal_mb * (16 / 8192) * 1024 * 1024) | int }}" }  # 100Mi / 8 ~= 16Mi
+  - { state: present, section: mon, option: mon_config_key_max_entry_size, value: "{{ (8 * 1024) | int }}" }  # 64Ki / 8 ~= 8Ki
+  - { state: present, section: mon, option: mon_daemon_bytes, value: "{{ (ceph_memtotal_mb * (64 / 8192) * 1024 * 1024) | int }}" }  # 400Mi / 8 ~= 64Mi
   - { state: present, section: mon, option: mon_data_avail_crit, value: "5" }  # 5%
   - { state: present, section: mon, option: mon_data_avail_warn, value: "10" }  # 30%
   - { state: present, section: mon, option: mon_memory_autotune, value: "false" }  # true
-  - { state: present, section: mon, option: mon_memory_target, value: "{{ (ceph_memtotal_mb * (512 / 8192) * 1024 * 1024) | int }}" }  # 2Gi / 4 ~= 512Mi
-  - { state: present, section: mon, option: mon_osd_cache_size, value: "128" }  # 500 / 4 ~= 128
-  - { state: present, section: mon, option: mon_osd_cache_size_min, value: "{{ (32 * 1024 * 1024) | int }}" }  # 128Mi / 4 ~= 32Mi
+  - { state: present, section: mon, option: mon_memory_target, value: "{{ (ceph_memtotal_mb * (256 / 8192) * 1024 * 1024) | int }}" }  # 2Gi / 8 ~= 256Mi
+  - { state: present, section: mon, option: mon_osd_cache_size, value: "64" }  # 500 / 8 ~= 64
+  - { state: present, section: mon, option: mon_osd_cache_size_min, value: "{{ (16 * 1024 * 1024) | int }}" }  # 128Mi / 8 ~= 16Mi
   - { state: present, section: mon, option: mon_warn_on_insecure_global_id_reclaim_allowed, value: "true" }  # true

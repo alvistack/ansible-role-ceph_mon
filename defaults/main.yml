@@ -18,19 +18,24 @@
 ceph_release: "{{ _ceph_release }}"
 
 # Ceph version.
-ceph_version: "{{ _ceph_version[ceph_release] }}"
+ceph_version: "{{ _ceph_version }}"
+
+# Ceph detected memory total (default with 8192Mi).
+ceph_memtotal_mb: "{{ (((ansible_facts['memtotal_mb'] + 8191) // 8192) * 8192) | int }}"
 
 # Ceph Monitor configs.
+# See https://github.com/ceph/ceph/blob/main/src/common/options/global.yaml.in
+# See https://github.com/ceph/ceph/blob/main/src/common/options/mon.yaml.in
 ceph_mon_config:
-  - { state: present, section: mon, option: auth_allow_insecure_global_id_reclaim, value: "false" }
-  - { state: present, section: mon, option: mon_allow_pool_delete, value: "true" }
-  - { state: present, section: mon, option: mon_client_bytes, value: "33554432" }
-  - { state: present, section: mon, option: mon_config_key_max_entry_size, value: "2048" }
-  - { state: present, section: mon, option: mon_daemon_bytes, value: "13107200" }
-  - { state: present, section: mon, option: mon_data_avail_crit, value: "5" }
-  - { state: present, section: mon, option: mon_data_avail_warn, value: "15" }
-  - { state: present, section: mon, option: mon_memory_autotune, value: "false" }
-  - { state: present, section: mon, option: mon_memory_target, value: "67108864" }
-  - { state: present, section: mon, option: mon_osd_cache_size, value: "16" }
-  - { state: present, section: mon, option: mon_osd_cache_size_min, value: "4194304" }
-  - { state: present, section: mon, option: mon_warn_on_insecure_global_id_reclaim_allowed, value: "true" }
+  - { state: present, section: mon, option: auth_allow_insecure_global_id_reclaim, value: "false" }  # true
+  - { state: present, section: mon, option: mon_allow_pool_delete, value: "true" }  # false
+  - { state: present, section: mon, option: mon_client_bytes, value: "{{ ((ceph_memtotal_mb | float) * (16 / 8192) * 1024 * 1024) | int }}" }  # 100Mi / 8 ~= 16Mi
+  - { state: present, section: mon, option: mon_config_key_max_entry_size, value: "{{ (8 * 1024) | int }}" }  # 64Ki / 8 ~= 8Ki
+  - { state: present, section: mon, option: mon_daemon_bytes, value: "{{ ((ceph_memtotal_mb | float) * (64 / 8192) * 1024 * 1024) | int }}" }  # 400Mi / 8 ~= 64Mi
+  - { state: present, section: mon, option: mon_data_avail_crit, value: "5" }  # 5%
+  - { state: present, section: mon, option: mon_data_avail_warn, value: "10" }  # 30%
+  - { state: present, section: mon, option: mon_memory_autotune, value: "false" }  # true
+  - { state: present, section: mon, option: mon_memory_target, value: "{{ ((ceph_memtotal_mb | float) * (256 / 8192) * 1024 * 1024) | int }}" }  # 2Gi / 8 ~= 256Mi
+  - { state: present, section: mon, option: mon_osd_cache_size, value: "64" }  # 500 / 8 ~= 64
+  - { state: present, section: mon, option: mon_osd_cache_size_min, value: "{{ (16 * 1024 * 1024) | int }}" }  # 128Mi / 8 ~= 16Mi
+  - { state: present, section: mon, option: mon_warn_on_insecure_global_id_reclaim_allowed, value: "true" }  # true

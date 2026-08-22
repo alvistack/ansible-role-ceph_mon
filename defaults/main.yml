@@ -38,4 +38,5 @@ ceph_mon_config:
   - { state: present, section: mon, option: mon_memory_target, value: "{{ ((ceph_memtotal_mb | float) * (256 / 8192) * 1024 * 1024) | int }}" }  # 2Gi / 8 ~= 256Mi
   - { state: present, section: mon, option: mon_osd_cache_size, value: "64" }  # 500 / 8 ~= 64
   - { state: present, section: mon, option: mon_osd_cache_size_min, value: "{{ (16 * 1024 * 1024) | int }}" }  # 128Mi / 8 ~= 16Mi
+  - { state: present, section: mon, option: mon_warn_on_insecure_global_id_reclaim, value: "false" }  # true
   - { state: present, section: mon, option: mon_warn_on_insecure_global_id_reclaim_allowed, value: "false" }  # true

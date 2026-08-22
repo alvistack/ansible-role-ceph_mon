@@ -144,13 +144,10 @@
     - ceph_mon | systemctl restart ceph-mon.target
 
 - name: import client.admin keyring into mon. keyring
-  ansible.builtin.shell:
-    cmd: |
-      set -euxo pipefail
-      ceph-authtool /var/lib/ceph/tmp/ceph.mon.keyring \
-        --import-keyring /etc/ceph/ceph.client.admin.keyring
-  args:
-    executable: /bin/bash
+  ceph_key: # noqa fqcn[action]
+    dest: /var/lib/ceph/tmp/ceph.mon.keyring
+    import_keyring: /etc/ceph/ceph.client.admin.keyring
+    state: import_keyring
   when: inventory_hostname == ansible_play_hosts[0]
   delegate_to: "{{ ansible_play_hosts[0] }}"
   register: result

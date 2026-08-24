@@ -27,6 +27,7 @@ ceph_memtotal_mb: "{{ (((ansible_facts['memtotal_mb'] + 8191) // 8192) * 8192) |
 # See https://github.com/ceph/ceph/blob/main/src/common/options/global.yaml.in
 # See https://github.com/ceph/ceph/blob/main/src/common/options/mon.yaml.in
 ceph_mon_config:
+  - { state: absent, section: mon, option: auth_allow_insecure_global_id_reclaim }  # true
   - { state: absent, section: mon, option: mon_auth_emergency_allowed_ciphers }  # aes256k
   - { state: present, section: mon, option: mon_allow_pool_delete, value: "true" }  # false
   - { state: present, section: mon, option: mon_client_bytes, value: "{{ ((ceph_memtotal_mb | float) * (16 / 8192) * 1024 * 1024) | int }}" }  # 100Mi / 8 ~= 16Mi
